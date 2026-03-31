@@ -14,6 +14,7 @@ import {
   startDockerDesktop,
 } from "./installer.js";
 import { collectConfig, readEnv, writeEnv, hasEnv } from "./config.js";
+import { ensureNetwork } from "./network.js";
 import {
   startServices,
   stopServices,
@@ -81,7 +82,24 @@ async function firstRunFlow(): Promise<void> {
     process.exit(1);
   }
 
-  // Step 3: Configuration (auto-config with defaults, no prompts)
+  // Step 3: Network check — verify LAN + discover DVR
+  s.start("Checking network...");
+  try {
+    const net = await ensureNetwork();
+    const notes: string[] = [];
+    if (net.staticIPUsed) notes.push("static IP fallback");
+    if (net.dvrDiscovered) notes.push("DVR auto-discovered");
+    const extra = notes.length > 0 ? pc.dim(` (${notes.join(", ")})`) : "";
+    s.stop(`${pc.green("✔")} Network OK${extra}`);
+    console.log(`  ${pc.dim("Host IP:")} ${pc.cyan(net.hostIP)}  ${pc.dim("DVR:")} ${pc.cyan(net.dvrIP)}`);
+    console.log();
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    s.stop(`${pc.red("✘")} Network error: ${errMsg}`);
+    process.exit(1);
+  }
+
+  // Step 4: Configuration (auto-config with defaults, no prompts)
   const config = await collectConfig(false);
   if (!config) {
     p.cancel("Setup cancelled.");
@@ -90,7 +108,7 @@ async function firstRunFlow(): Promise<void> {
   writeEnv(config);
   console.log(`  ${pc.green("✔")} Configuration saved\n`);
 
-  // Step 4: Start services
+  // Step 5: Start services
   console.log(pc.bold("  Starting services...\n"));
   try {
     await startServices();
@@ -181,6 +199,17 @@ async function managementMenu(): Promise<void> {
         process.exit(1);
       }
       s.stop(`${pc.green("✔")} Docker running`);
+    }
+
+    // Network check
+    s.start("Checking network...");
+    try {
+      const net = await ensureNetwork();
+      s.stop(`${pc.green("✔")} Network OK — Host: ${pc.cyan(net.hostIP)}, DVR: ${pc.cyan(net.dvrIP)}`);
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      s.stop(`${pc.red("✘")} ${errMsg}`);
+      process.exit(1);
     }
 
     console.log(pc.bold("\n  Starting services...\n"));
