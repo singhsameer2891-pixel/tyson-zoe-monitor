@@ -273,12 +273,18 @@ async function managementMenu(): Promise<void> {
     } catch {
       // may not be running
     }
-    s.stop(`${pc.green("✔")} Containers removed`);
-    p.note(
-      `Project files remain at: ${INSTALL_DIR}\nDelete manually if you want to remove everything.`,
-      "Cleanup"
-    );
-    p.outro(`${pc.green("✔")} TysonZoeMonitor uninstalled`);
+    s.stop(`${pc.green("✔")} Containers stopped`);
+
+    s.start("Removing project files...");
+    const { rm } = await import("fs/promises");
+    try {
+      await rm(INSTALL_DIR, { recursive: true, force: true });
+    } catch {
+      // ignore
+    }
+    s.stop(`${pc.green("✔")} Project files removed`);
+
+    p.outro(`${pc.green("✔")} TysonZoeMonitor fully uninstalled. Run ${pc.bold("npx tyson-zoe-monitor")} to reinstall.`);
     process.exit(0);
   }
 }
