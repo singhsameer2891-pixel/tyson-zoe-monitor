@@ -1,0 +1,91 @@
+mqtt:
+  host: mosquitto
+  port: 1883
+
+# Detection model — YOLOv8n runs on CPU for test phase
+detectors:
+  cpu:
+    type: cpu
+
+# go2rtc handles RTSP auth better than raw ffmpeg (avoids @ in password issues)
+go2rtc:
+  streams:
+    camera_garden:
+      - rtsp://frigate:Frigate1!@192.168.31.245:554/cam/realmonitor?channel=5&subtype=0
+    camera_garden_sub:
+      - rtsp://frigate:Frigate1!@192.168.31.245:554/cam/realmonitor?channel=5&subtype=1
+    camera_entrance:
+      - rtsp://frigate:Frigate1!@192.168.31.245:554/cam/realmonitor?channel=4&subtype=0
+    camera_entrance_sub:
+      - rtsp://frigate:Frigate1!@192.168.31.245:554/cam/realmonitor?channel=4&subtype=1
+
+cameras:
+  # ──────────────────────────────────────────────────────
+  # GARDEN CAMERA — Monitors Tyson & Zoe entering garden
+  # ──────────────────────────────────────────────────────
+  # Replace <RTSP_URL> with your camera's RTSP stream URL.
+  # Common formats:
+  #   Hikvision: rtsp://user:pass@IP:554/Streaming/Channels/101
+  #   Dahua:     rtsp://user:pass@IP:554/cam/realmonitor?channel=1&subtype=0
+  #   CP Plus:   rtsp://user:pass@IP:554/cam/realmonitor?channel=1&subtype=1
+  camera_garden:
+    ffmpeg:
+      inputs:
+        - path: rtsp://127.0.0.1:8554/camera_garden_sub
+          roles: [detect]
+        - path: rtsp://127.0.0.1:8554/camera_garden
+          roles: [record]
+    detect:
+      enabled: true
+      width: 640
+      height: 360
+      fps: 5
+    objects:
+      track: [person, dog]
+    zones:
+      # Zone coordinates are normalized (0.0–1.0) polygon points.
+      # Use Frigate's debug view at http://localhost:5000 to draw zones
+      # and copy the coordinates here. Using full frame as placeholder.
+      garden_zone:
+        coordinates: 0.165,0.789,0.319,0.674,0.559,1,0.254,1
+        objects: dog
+        inertia: 3
+        loitering_time: 0
+  camera_entrance:
+    ffmpeg:
+      inputs:
+        - path: rtsp://127.0.0.1:8554/camera_entrance_sub
+          roles: [detect]
+        - path: rtsp://127.0.0.1:8554/camera_entrance
+          roles: [record]
+    detect:
+      enabled: true
+      width: 640
+      height: 360
+      fps: 5
+    objects:
+      track: [person, dog]
+    zones:
+      backyard_garden:
+        coordinates: 0.909,0.533,0.716,0.729,0.528,0.918,0.578,1,1,1,1,0.63
+        loitering_time: 0
+        inertia: 3
+        objects: dog
+record:
+  enabled: true
+  alerts:
+    retain:
+      days: 14
+  detections:
+    retain:
+      days: 14
+  continuous:
+    days: 7
+  motion:
+    days: 7
+snapshots:
+  enabled: true
+  bounding_box: true
+  retain:
+    default: 14
+version: 0.17-0

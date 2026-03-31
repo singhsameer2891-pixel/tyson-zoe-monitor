@@ -1,0 +1,39 @@
+[
+  {
+    "id": "rule-dog-garden",
+    "name": "Dog in Garden (Tyson/Zoe)",
+    "camera": "camera_entrance",
+    "zone": "backyard_garden",
+    "objectType": "dog",
+    "action": "entered",
+    "timeRestriction": { "enabled": false },
+    "notificationTemplate": "🐕 Tyson or Zoe spotted in the garden!",
+    "enabled": true
+  },
+  {
+    "id": "rule-person-garden",
+    "name": "Person in Garden",
+    "camera": "camera_entrance",
+    "zone": "backyard_garden",
+    "objectType": "person",
+    "action": "entered",
+    "timeRestriction": { "enabled": false },
+    "notificationTemplate": "👤 Person detected in the garden area",
+    "enabled": true
+  },
+  {
+    "id": "rule-intruder-night",
+    "name": "Nighttime Boundary Breach",
+    "camera": "camera_garden",
+    "zone": "garden_zone",
+    "objectType": "person",
+    "action": "entered",
+    "timeRestriction": {
+      "enabled": true,
+      "startHour": 23,
+      "endHour": 6
+    },
+    "notificationTemplate": "⚠️ ALERT: Person detected at boundary!",
+    "enabled": true
+  }
+]

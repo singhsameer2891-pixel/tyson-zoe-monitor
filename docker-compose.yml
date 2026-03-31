@@ -1,0 +1,84 @@
+version: "3.9"
+
+services:
+  # ── MQTT Broker ──
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: cctv-mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+    networks:
+      - cctv-net
+
+  # ── Frigate NVR ──
+  frigate:
+    image: ghcr.io/blakeblackshear/frigate:stable
+    container_name: cctv-frigate
+    restart: unless-stopped
+    privileged: true
+    shm_size: "256mb"
+    ports:
+      - "5001:5000"   # Frigate web UI (5000 taken by macOS AirPlay)
+      - "8554:8554"   # RTSP restream
+    volumes:
+      - ./config/frigate.yml:/config/config.yml
+      - ./media/clips:/media/frigate/clips
+      - type: tmpfs
+        target: /tmp/cache
+        tmpfs:
+          size: 1000000000
+    environment:
+      FRIGATE_RTSP_PASSWORD: ""
+    depends_on:
+      - mosquitto
+    networks:
+      - cctv-net
+
+  # ── Automation Service ──
+  automation:
+    build:
+      context: ./services/automation
+      dockerfile: Dockerfile
+    container_name: cctv-automation
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-4000}:4000"
+    volumes:
+      - ./config/rules.json:/config/rules.json
+      - ./config/frigate.yml:/config/config.yml
+      - ./data:/data
+    environment:
+      RULES_PATH: /config/rules.json
+      DB_PATH: /data/events.db
+      FRIGATE_CONFIG_PATH: /config/config.yml
+    env_file:
+      - .env
+    depends_on:
+      - mosquitto
+      - frigate
+    networks:
+      - cctv-net
+
+  # ── Dashboard ──
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ""
+        VITE_FRIGATE_URL: "http://${HOST_IP:-localhost}:5001"
+    container_name: cctv-dashboard
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - automation
+    networks:
+      - cctv-net
+
+networks:
+  cctv-net:
+    driver: bridge
