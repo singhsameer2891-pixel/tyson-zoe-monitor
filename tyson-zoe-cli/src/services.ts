@@ -55,6 +55,20 @@ export async function startServices(): Promise<void> {
   const tasks = new Listr(
     [
       {
+        title: "Cleaning up stale containers",
+        task: async () => {
+          // Remove any conflicting containers from previous installs
+          const names = ["cctv-mosquitto", "cctv-frigate", "cctv-automation", "cctv-dashboard"];
+          for (const name of names) {
+            try {
+              await execa("docker", ["rm", "-f", name], { timeout: 10000 });
+            } catch {
+              // container doesn't exist — fine
+            }
+          }
+        },
+      },
+      {
         title: "Pulling Docker images",
         task: async () => {
           await execa("docker", ["compose", "pull"], {
