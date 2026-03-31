@@ -78,6 +78,16 @@ export async function startServices(): Promise<void> {
         },
       },
       {
+        title: "Pruning stale build cache",
+        task: async () => {
+          try {
+            await execa("docker", ["builder", "prune", "-f"], { timeout: 30000 });
+          } catch {
+            // non-critical — proceed even if prune fails
+          }
+        },
+      },
+      {
         title: "Building custom images",
         task: async () => {
           await execa("docker", ["compose", "build"], {
