@@ -67,18 +67,54 @@ export function hasEnv(): boolean {
   return existsSync(ENV_PATH);
 }
 
-export async function collectConfig(): Promise<EnvConfig | null> {
+/** Default values committed to repo — used when no .env exists yet */
+const DEFAULTS: EnvConfig = {
+  TELEGRAM_BOT_TOKEN: "8625097684:AAF1dWnh6mP4D-tsih86wJ6-GP7czWoGf9U",
+  TELEGRAM_CHAT_ID: "-1003764007243",
+  HOST_IP: "",
+  NOTIFICATION_COOLDOWN_SECONDS: "60",
+  FRIGATE_API_URL: "http://frigate:5000",
+  MQTT_HOST: "mosquitto",
+  MQTT_PORT: "1883",
+  API_PORT: "4000",
+  VITE_API_URL: "http://localhost:4000",
+};
+
+export function getDefaultConfig(): EnvConfig {
+  // Try reading existing .env first, fall back to hardcoded defaults
+  const existing = readEnv();
+  const detectedIP = getLanIP();
+  return {
+    ...DEFAULTS,
+    ...existing,
+    HOST_IP: existing?.HOST_IP || detectedIP,
+  };
+}
+
+export async function collectConfig(askUser: boolean = false): Promise<EnvConfig | null> {
+  const defaults = getDefaultConfig();
+
+  // If not asking user, just auto-detect IP and return defaults
+  if (!askUser) {
+    const detectedIP = getLanIP();
+    defaults.HOST_IP = detectedIP;
+    console.log(`  ${pc.green("✔")} Telegram Bot: ${pc.dim("configured")}`);
+    console.log(`  ${pc.green("✔")} Chat ID:      ${pc.cyan(defaults.TELEGRAM_CHAT_ID)}`);
+    console.log(`  ${pc.green("✔")} Host IP:      ${pc.cyan(defaults.HOST_IP)}`);
+    console.log();
+    return defaults;
+  }
+
+  // Interactive mode — show current values, let user change
   p.note(
-    "You'll need:\n" +
-      "  1. A Telegram Bot Token (from @BotFather)\n" +
-      "  2. A Telegram Chat ID (personal or group)\n" +
-      "  3. Your LAN IP auto-detected below",
+    "Current values shown as defaults. Press Enter to keep, or type to change.",
     "Configuration"
   );
 
   const token = await p.text({
     message: "Telegram Bot Token",
-    placeholder: "1234567890:ABCdefGHIjklMNOpqrsTUVwxyz",
+    placeholder: defaults.TELEGRAM_BOT_TOKEN,
+    defaultValue: defaults.TELEGRAM_BOT_TOKEN,
     validate: (v) => {
       if (!v || v.length < 20) return "Token must be at least 20 characters";
     },
@@ -87,7 +123,8 @@ export async function collectConfig(): Promise<EnvConfig | null> {
 
   const chatId = await p.text({
     message: "Telegram Chat ID",
-    placeholder: "-1001234567890 (negative for groups)",
+    placeholder: defaults.TELEGRAM_CHAT_ID,
+    defaultValue: defaults.TELEGRAM_CHAT_ID,
     validate: (v) => {
       if (!v || isNaN(Number(v))) return "Must be a number (negative for groups)";
     },
@@ -109,14 +146,9 @@ export async function collectConfig(): Promise<EnvConfig | null> {
   console.log();
 
   return {
+    ...defaults,
     TELEGRAM_BOT_TOKEN: String(token),
     TELEGRAM_CHAT_ID: String(chatId),
     HOST_IP: String(hostIp),
-    NOTIFICATION_COOLDOWN_SECONDS: "60",
-    FRIGATE_API_URL: "http://frigate:5000",
-    MQTT_HOST: "mosquitto",
-    MQTT_PORT: "1883",
-    API_PORT: "4000",
-    VITE_API_URL: "http://localhost:4000",
   };
 }

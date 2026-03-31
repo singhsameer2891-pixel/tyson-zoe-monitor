@@ -4,7 +4,7 @@
   "description": "One-command setup for TysonZoeMonitor — Home CCTV intelligence for dog monitoring & intrusion detection.",
   "type": "module",
   "bin": {
-    "tyson-zoe-monitor": "./dist/index.js"
+    "tyson-zoe-monitor": "dist/index.js"
   },
   "scripts": {
     "build": "tsc",

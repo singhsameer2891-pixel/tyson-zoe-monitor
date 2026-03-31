@@ -81,8 +81,8 @@ async function firstRunFlow(): Promise<void> {
     process.exit(1);
   }
 
-  // Step 3: Configuration
-  const config = await collectConfig();
+  // Step 3: Configuration (auto-config with defaults, no prompts)
+  const config = await collectConfig(false);
   if (!config) {
     p.cancel("Setup cancelled.");
     process.exit(0);
@@ -198,7 +198,7 @@ async function managementMenu(): Promise<void> {
   }
 
   if (action === "reconfigure") {
-    const config = await collectConfig();
+    const config = await collectConfig(true);
     if (config) {
       writeEnv(config);
       console.log(`\n  ${pc.green("✔")} Configuration saved`);

@@ -1,5 +1,5 @@
 # Environment
-.env
+# .env is committed since this is a private repo
 
 # Data
 data/
