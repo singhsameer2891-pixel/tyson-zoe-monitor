@@ -10,6 +10,7 @@ const ENV_EXAMPLE_PATH = join(INSTALL_DIR, ".env.example");
 export interface EnvConfig {
   TELEGRAM_BOT_TOKEN: string;
   TELEGRAM_CHAT_ID: string;
+  GITHUB_GIST_TOKEN: string;
   HOST_IP: string;
   NOTIFICATION_COOLDOWN_SECONDS: string;
   FRIGATE_API_URL: string;
@@ -41,6 +42,9 @@ export function writeEnv(config: EnvConfig): void {
     `TELEGRAM_BOT_TOKEN=${config.TELEGRAM_BOT_TOKEN}`,
     `TELEGRAM_CHAT_ID=${config.TELEGRAM_CHAT_ID}`,
     "",
+    "# Remote Diagnostics",
+    `GITHUB_GIST_TOKEN=${config.GITHUB_GIST_TOKEN}`,
+    "",
     "# Notification",
     `NOTIFICATION_COOLDOWN_SECONDS=${config.NOTIFICATION_COOLDOWN_SECONDS}`,
     "",
@@ -71,6 +75,7 @@ export function hasEnv(): boolean {
 const DEFAULTS: EnvConfig = {
   TELEGRAM_BOT_TOKEN: "",
   TELEGRAM_CHAT_ID: "",
+  GITHUB_GIST_TOKEN: "",
   HOST_IP: "",
   NOTIFICATION_COOLDOWN_SECONDS: "60",
   FRIGATE_API_URL: "http://frigate:5000",
@@ -100,6 +105,7 @@ export async function collectConfig(askUser: boolean = false): Promise<EnvConfig
     defaults.HOST_IP = detectedIP;
     console.log(`  ${pc.green("✔")} Telegram Bot: ${pc.dim("configured")}`);
     console.log(`  ${pc.green("✔")} Chat ID:      ${pc.cyan(defaults.TELEGRAM_CHAT_ID)}`);
+    console.log(`  ${pc.green("✔")} Gist Token:   ${defaults.GITHUB_GIST_TOKEN ? pc.dim("configured") : pc.yellow("not set")}`);
     console.log(`  ${pc.green("✔")} Host IP:      ${pc.cyan(defaults.HOST_IP)}`);
     console.log();
     return defaults;
@@ -131,24 +137,27 @@ export async function collectConfig(askUser: boolean = false): Promise<EnvConfig
   });
   if (p.isCancel(chatId)) return null;
 
-  const detectedIP = getLanIP();
-  const hostIp = await p.text({
-    message: "Host machine LAN IP",
-    placeholder: detectedIP,
-    defaultValue: detectedIP,
+  const gistToken = await p.text({
+    message: "GitHub Gist Token (for remote diagnostics, optional — press Enter to skip)",
+    placeholder: defaults.GITHUB_GIST_TOKEN || "ghp_...",
+    defaultValue: defaults.GITHUB_GIST_TOKEN,
   });
-  if (p.isCancel(hostIp)) return null;
+  if (p.isCancel(gistToken)) return null;
+
+  const detectedIP = getLanIP();
 
   console.log();
-  console.log(`  ${pc.green("✔")} Token:   ${pc.dim(String(token).slice(0, 10) + "...")}`);
-  console.log(`  ${pc.green("✔")} Chat ID: ${pc.cyan(String(chatId))}`);
-  console.log(`  ${pc.green("✔")} Host IP: ${pc.cyan(String(hostIp))}`);
+  console.log(`  ${pc.green("✔")} Token:      ${pc.dim(String(token).slice(0, 10) + "...")}`);
+  console.log(`  ${pc.green("✔")} Chat ID:    ${pc.cyan(String(chatId))}`);
+  console.log(`  ${pc.green("✔")} Gist Token: ${gistToken ? pc.dim(String(gistToken).slice(0, 10) + "...") : pc.yellow("skipped")}`);
+  console.log(`  ${pc.green("✔")} Host IP:    ${pc.cyan(detectedIP)} ${pc.dim("(auto-detected)")}`);
   console.log();
 
   return {
     ...defaults,
     TELEGRAM_BOT_TOKEN: String(token),
     TELEGRAM_CHAT_ID: String(chatId),
-    HOST_IP: String(hostIp),
+    GITHUB_GIST_TOKEN: String(gistToken || ""),
+    HOST_IP: detectedIP,
   };
 }

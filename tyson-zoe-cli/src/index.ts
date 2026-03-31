@@ -14,7 +14,7 @@ import {
   startDockerDesktop,
 } from "./installer.js";
 import { collectConfig, readEnv, writeEnv, hasEnv } from "./config.js";
-import { ensureNetwork } from "./network.js";
+import { ensureNetwork, getRTSPUrls, validateRTSPStream } from "./network.js";
 import {
   startServices,
   stopServices,
@@ -119,7 +119,25 @@ async function firstRunFlow(): Promise<void> {
     process.exit(1);
   }
 
-  // Step 5: Health check
+  // Step 5.5: Validate RTSP streams
+  const rtspUrls = getRTSPUrls();
+  if (rtspUrls.length > 0) {
+    console.log(`  ${pc.dim("Validating RTSP streams...")}`);
+    for (const url of rtspUrls) {
+      // Mask password in display
+      const displayUrl = url.replace(/:([^@]+)@/, ":****@");
+      const result = await validateRTSPStream(url);
+      if (result.ok) {
+        console.log(`  ${pc.green("✔")} ${pc.dim(displayUrl)}`);
+      } else {
+        console.log(`  ${pc.red("✘")} ${pc.dim(displayUrl)}`);
+        console.log(`    ${pc.yellow(result.error || "Unknown error")}`);
+      }
+    }
+    console.log();
+  }
+
+  // Step 6: Health check
   const health = await getHealthStatus();
 
   console.log();

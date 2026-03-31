@@ -6,6 +6,7 @@ import axios from "axios";
 import { getEvents, EventQuery } from "./eventLogger";
 import { loadRules, saveRules } from "./ruleEngine";
 import { isMqttConnected, startTime } from "./index";
+import { runDiagnostics } from "./diagnostics";
 
 const FRIGATE_API_URL = process.env.FRIGATE_API_URL || "http://frigate:5000";
 const FRIGATE_CONFIG_PATH =
@@ -95,6 +96,17 @@ app.get("/api/health", async (_req: Request, res: Response) => {
     frigate: frigateUp,
     uptime: Math.floor((Date.now() - startTime) / 1000),
   });
+});
+
+// GET /api/diagnostics — full system diagnostic report
+app.get("/api/diagnostics", async (_req: Request, res: Response) => {
+  try {
+    const report = await runDiagnostics();
+    res.json(report);
+  } catch (err) {
+    console.error("[api] Diagnostics failed:", err);
+    res.status(500).json({ error: "Diagnostics failed" });
+  }
 });
 
 // GET /api/snapshot/:eventId — proxy snapshot from Frigate

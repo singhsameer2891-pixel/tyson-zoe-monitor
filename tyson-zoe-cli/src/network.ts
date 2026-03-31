@@ -188,6 +188,59 @@ export function getCurrentDVRIP(): string | null {
   }
 }
 
+/** Extract RTSP URLs from frigate.yml go2rtc section */
+export function getRTSPUrls(): string[] {
+  try {
+    const config = readFileSync(FRIGATE_CONFIG_PATH, "utf-8");
+    const urls: string[] = [];
+    const regex = /- rtsp:\/\/[^\s]+/g;
+    let match;
+    while ((match = regex.exec(config)) !== null) {
+      urls.push(match[0].replace("- ", ""));
+    }
+    // Return only main streams (not sub streams, to keep it fast)
+    return urls.filter((u) => !u.includes("_sub"));
+  } catch {
+    return [];
+  }
+}
+
+/** Test an RTSP stream using ffprobe via Docker (runs inside Frigate container if available, else host) */
+export async function validateRTSPStream(
+  rtspUrl: string,
+  timeoutMs: number = 10000
+): Promise<{ ok: boolean; error: string | null }> {
+  try {
+    // Try ffprobe via the Frigate container first (it has ffmpeg installed)
+    const result = await execa("docker", [
+      "exec", "cctv-frigate",
+      "ffprobe",
+      "-v", "error",
+      "-show_entries", "stream=codec_name,width,height",
+      "-of", "csv",
+      "-rtsp_transport", "tcp",
+      rtspUrl,
+    ], { timeout: timeoutMs });
+
+    if (result.stdout && result.stdout.trim().length > 0) {
+      return { ok: true, error: null };
+    }
+    return { ok: false, error: "ffprobe returned no stream info" };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("401") || msg.includes("Unauthorized")) {
+      return { ok: false, error: "Authentication failed — wrong username/password" };
+    }
+    if (msg.includes("Connection refused")) {
+      return { ok: false, error: "Connection refused — RTSP port not open on DVR" };
+    }
+    if (msg.includes("timed out") || msg.includes("timeout")) {
+      return { ok: false, error: "Timeout — DVR not reachable from Docker container (check Docker network_mode)" };
+    }
+    return { ok: false, error: msg.slice(0, 200) };
+  }
+}
+
 /** Full network check and auto-recovery. Returns { hostIP, dvrIP } or throws. */
 export async function ensureNetwork(): Promise<{
   hostIP: string;

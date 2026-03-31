@@ -6,6 +6,8 @@ import { initDatabase, logEvent } from "./eventLogger";
 import { evaluateEvent, markNotified } from "./ruleEngine";
 import { sendTelegramNotification } from "./notifier";
 import { startApiServer } from "./apiServer";
+import { runDiagnostics } from "./diagnostics";
+import { pushDiagnostics } from "./gistLogger";
 import { FrigateEvent } from "./types";
 
 const MQTT_HOST = process.env.MQTT_HOST || "mosquitto";
@@ -152,6 +154,22 @@ function main(): void {
 
   // Start REST API for dashboard
   startApiServer();
+
+  // Run diagnostics on startup + every 1 min, push to GitHub Gist
+  const runAndPush = async () => {
+    try {
+      const report = await runDiagnostics();
+      await pushDiagnostics(report);
+    } catch (err) {
+      console.error("[diagnostics] Error:", err instanceof Error ? err.message : err);
+    }
+  };
+
+  // Delay first run by 15s to let Frigate/MQTT stabilize
+  setTimeout(() => {
+    runAndPush();
+    setInterval(runAndPush, 60_000);
+  }, 15_000);
 
   console.log("[service] Automation service running");
 }

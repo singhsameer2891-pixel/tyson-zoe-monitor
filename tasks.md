@@ -114,3 +114,75 @@
 | 8.6 | Implement `src/services.ts` — docker compose up/down/status/health/logs | ✅ | listr2 progress |
 | 8.7 | Implement `src/index.ts` — entry point, menu router, first-run vs returning | ✅ | |
 | 8.8 | Build + test end-to-end on Mac | ✅ | Banner, Docker check, clone, config prompts all working |
+
+---
+
+## GROUP 9: Remote Diagnostics & RTSP Validation
+**Depends on:** GROUP 3
+**Summary:** Add diagnostic logging that pushes system health + RTSP connectivity results to a GitHub Gist every 1 min, accessible remotely for debugging.
+
+| ID | Task | Status | Notes |
+|----|------|--------|-------|
+| 9.1 | Create `src/diagnostics.ts` — RTSP probe, MQTT check, Frigate health, network info, camera status | ✅ | |
+| 9.2 | Create `src/gistLogger.ts` — create/update GitHub Gist with diagnostics JSON | ✅ | [PARALLEL with 9.1] |
+| 9.3 | Wire diagnostics into `index.ts` — run on startup + every 1 min interval | ✅ | 15s initial delay, then every 60s |
+| 9.4 | Add `/api/diagnostics` endpoint to `apiServer.ts` | ✅ | |
+| 9.5 | Add `GITHUB_GIST_TOKEN` to `.env.example` | ✅ | [PARALLEL with 9.3] |
+| 9.6 | Add RTSP stream validation to CLI `network.ts` — test actual stream not just TCP port | ✅ | ffprobe via Frigate container |
+
+---
+
+## GROUP 10: Twilio Phone Call Integration
+**Depends on:** GROUP 2
+**Summary:** Add automated phone call alerts via Twilio when a rule matches — fires in parallel with Telegram.
+
+| ID | Task | Status | Notes |
+|----|------|--------|-------|
+| 10.1 | Install `twilio` SDK in `services/automation/` | ⏳ | |
+| 10.2 | Create `src/twilioNotifier.ts` — TwiML voice call with spoken alert message, retry if no answer (2 retries) | ⏳ | |
+| 10.3 | Add Twilio env vars to `.env.example` | ⏳ | [PARALLEL with 10.2] |
+| 10.4 | Wire Twilio call into `index.ts` notification flow — fire in parallel with Telegram | ⏳ | |
+| 10.5 | Update dashboard `Settings.tsx` with Twilio config section | ⏳ | |
+
+---
+
+## GROUP 11: Alexa Smart Home Skill — Lambda & Skill Backend
+**Depends on:** GROUP 2
+**Summary:** Create AWS Lambda handler for Alexa Smart Home Skill (virtual contact sensor) and the proactive event reporter in the Node backend.
+
+| ID | Task | Status | Notes |
+|----|------|--------|-------|
+| 11.1 | Create `lambda/alexa-smart-home/` — Lambda handler for Discovery + AcceptGrant + StateReport directives | ⏳ | Returns virtual "Garden Alert Sensor" contact sensor |
+| 11.2 | Create `lambda/alexa-smart-home/package.json` + build script | ⏳ | [PARALLEL with 11.1] |
+| 11.3 | Create `src/alexaNotifier.ts` — send ChangeReport to Alexa Event Gateway (proactive state reporting) | ⏳ | |
+| 11.4 | Implement LWA (Login with Amazon) OAuth2 token management in `src/alexaAuth.ts` — token fetch + auto-refresh | ⏳ | [PARALLEL with 11.3] |
+| 11.5 | Add Alexa env vars to `.env.example` | ⏳ | |
+| 11.6 | Wire Alexa notification into `index.ts` — fire in parallel with Telegram + Twilio | ⏳ | |
+
+---
+
+## GROUP 12: Notification Channel Config & Dashboard Updates
+**Depends on:** GROUP 10, GROUP 11
+**Summary:** Add per-rule notification channel selection, update dashboard UI, and update all docs.
+
+| ID | Task | Status | Notes |
+|----|------|--------|-------|
+| 12.1 | Update `Rule` type in `types.ts` — add `notificationChannels: ('telegram' \| 'twilio' \| 'alexa')[]` field | ⏳ | |
+| 12.2 | Create `src/notificationDispatcher.ts` — unified dispatcher that fires enabled channels per rule in parallel | ⏳ | |
+| 12.3 | Refactor `index.ts` to use dispatcher instead of direct `sendTelegramNotification` call | ⏳ | |
+| 12.4 | Update `RuleModal.tsx` — add channel checkboxes (Telegram, Phone Call, Alexa) | ⏳ | |
+| 12.5 | Update dashboard `Settings.tsx` — add Alexa config section | ⏳ | |
+| 12.6 | Update `config/rules.json` seed data with `notificationChannels` field | ⏳ | |
+| 12.7 | Update `architecture.md` — add notification channels to system diagram | ⏳ | |
+| 12.8 | Update `README.md` — Twilio + Alexa setup instructions | ⏳ | |
+
+---
+
+## GROUP 13: Alexa Skill Setup Guide & Routine Config
+**Depends on:** GROUP 11
+**Summary:** Step-by-step guide for creating the Alexa Skill in Amazon Developer Console, deploying Lambda, account linking, and configuring the Alexa Routine.
+
+| ID | Task | Status | Notes |
+|----|------|--------|-------|
+| 13.1 | Create `docs/user/alexa-setup-guide.md` — full walkthrough: Developer Console → Skill creation → Lambda deploy → Account linking → Device discovery → Routine setup | ⏳ | |
+| 13.2 | Create `docs/user/twilio-setup-guide.md` — account creation, phone number, verified caller IDs, env config | ⏳ | [PARALLEL with 13.1] |
