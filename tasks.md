@@ -97,3 +97,20 @@
 | 7.1 | Write `README.md` — full setup guide, RTSP URL help, troubleshooting | ✅ | Setup steps, RTSP formats, troubleshooting |
 | 7.2 | Write `architecture.md` — Mermaid diagram, component docs, data flow | ✅ | System + module diagrams, data model, design decisions |
 | 7.3 | Write `docs/dev/setup.md` — developer setup without Docker | ✅ | Local dev for both services, manual MQTT testing |
+
+---
+
+## GROUP 8: CLI Package — tyson-zoe-cli ✅
+**Depends on:** GROUP 7
+**Summary:** NPM CLI package for one-command setup on any Mac/Windows laptop — Docker check, project download, interactive config, service management.
+
+| ID | Task | Status | Notes |
+|----|------|--------|-------|
+| 8.1 | Scaffold project: package.json, tsconfig.json, .gitignore | ✅ | ESM, bin: tyson-zoe-monitor |
+| 8.2 | Implement `src/banner.ts` — ASCII art branding + version | ✅ | picocolors |
+| 8.3 | Implement `src/utils.ts` — OS detect, LAN IP, port check, install path | ✅ | Mac + Windows |
+| 8.4 | Implement `src/installer.ts` — Docker check/install, repo clone, detect existing | ✅ | |
+| 8.5 | Implement `src/config.ts` — interactive .env prompts, read/write config | ✅ | @clack/prompts |
+| 8.6 | Implement `src/services.ts` — docker compose up/down/status/health/logs | ✅ | listr2 progress |
+| 8.7 | Implement `src/index.ts` — entry point, menu router, first-run vs returning | ✅ | |
+| 8.8 | Build + test end-to-end on Mac | ✅ | Banner, Docker check, clone, config prompts all working |

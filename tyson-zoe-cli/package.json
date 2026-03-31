@@ -1,0 +1,39 @@
+{
+  "name": "tyson-zoe-monitor",
+  "version": "1.0.0",
+  "description": "One-command setup for TysonZoeMonitor — Home CCTV intelligence for dog monitoring & intrusion detection.",
+  "type": "module",
+  "bin": {
+    "tyson-zoe-monitor": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc && node dist/index.js",
+    "prepublishOnly": "tsc"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@clack/prompts": "^0.9.0",
+    "execa": "^9.5.0",
+    "listr2": "^8.2.0",
+    "picocolors": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  },
+  "keywords": [
+    "cctv",
+    "home-security",
+    "dog-monitor",
+    "frigate",
+    "telegram",
+    "cli"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}
