@@ -67,10 +67,10 @@ export function hasEnv(): boolean {
   return existsSync(ENV_PATH);
 }
 
-/** Default values committed to repo — used when no .env exists yet */
+/** Default values — user must configure on first run */
 const DEFAULTS: EnvConfig = {
-  TELEGRAM_BOT_TOKEN: "8625097684:AAF1dWnh6mP4D-tsih86wJ6-GP7czWoGf9U",
-  TELEGRAM_CHAT_ID: "-1003764007243",
+  TELEGRAM_BOT_TOKEN: "",
+  TELEGRAM_CHAT_ID: "",
   HOST_IP: "",
   NOTIFICATION_COOLDOWN_SECONDS: "60",
   FRIGATE_API_URL: "http://frigate:5000",
@@ -94,8 +94,8 @@ export function getDefaultConfig(): EnvConfig {
 export async function collectConfig(askUser: boolean = false): Promise<EnvConfig | null> {
   const defaults = getDefaultConfig();
 
-  // If not asking user, just auto-detect IP and return defaults
-  if (!askUser) {
+  // If not asking user AND credentials exist, just auto-detect IP and return
+  if (!askUser && defaults.TELEGRAM_BOT_TOKEN && defaults.TELEGRAM_CHAT_ID) {
     const detectedIP = getLanIP();
     defaults.HOST_IP = detectedIP;
     console.log(`  ${pc.green("✔")} Telegram Bot: ${pc.dim("configured")}`);
