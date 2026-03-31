@@ -70,7 +70,9 @@ cameras:
         coordinates: 0.909,0.533,0.716,0.729,0.528,0.918,0.578,1,1,1,1,0.63
         loitering_time: 0
         inertia: 3
-        objects: dog
+        objects:
+          - dog
+          - person
 record:
   enabled: true
   alerts:
