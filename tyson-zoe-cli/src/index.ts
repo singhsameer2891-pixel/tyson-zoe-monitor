@@ -15,6 +15,7 @@ import {
 } from "./installer.js";
 import { collectConfig, readEnv, writeEnv, hasEnv } from "./config.js";
 import { ensureNetwork, getRTSPUrls, validateRTSPStream } from "./network.js";
+import { applyPlatformFixes } from "./platform.js";
 import {
   startServices,
   stopServices,
@@ -23,7 +24,7 @@ import {
   showLogs,
   getHealthStatus,
 } from "./services.js";
-import { openInBrowser, INSTALL_DIR } from "./utils.js";
+import { openInBrowser, INSTALL_DIR, getOS } from "./utils.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -82,6 +83,9 @@ async function firstRunFlow(): Promise<void> {
     process.exit(1);
   }
 
+  // Step 2.5: Apply OS-specific fixes (e.g., host networking on Windows)
+  applyPlatformFixes();
+
   // Step 3: Network check — verify LAN + discover DVR
   s.start("Checking network...");
   try {
@@ -139,6 +143,7 @@ async function firstRunFlow(): Promise<void> {
 
   // Step 6: Health check
   const health = await getHealthStatus();
+  const fPort = getOS() === "windows" ? 5000 : 5001;
 
   console.log();
   const box = [
@@ -147,7 +152,7 @@ async function firstRunFlow(): Promise<void> {
     `  ${pc.green("║")}  ${pc.bold("🎉 TysonZoeMonitor is running!")}              ${pc.green("║")}`,
     `  ${pc.green("║")}                                              ${pc.green("║")}`,
     `  ${pc.green("║")}  Dashboard:  ${pc.cyan("http://localhost:3000")}            ${pc.green("║")}`,
-    `  ${pc.green("║")}  Frigate UI: ${pc.cyan("http://localhost:5001")}            ${pc.green("║")}`,
+    `  ${pc.green("║")}  Frigate UI: ${pc.cyan(`http://localhost:${fPort}`)}            ${pc.green("║")}`,
     `  ${pc.green("║")}  MQTT:       ${health?.mqtt ? pc.green("connected") : pc.red("disconnected")}                     ${pc.green("║")}`,
     `  ${pc.green("║")}  Frigate:    ${health?.frigate ? pc.green("connected") : pc.red("disconnected")}                     ${pc.green("║")}`,
     `  ${pc.green("║")}                                              ${pc.green("║")}`,
@@ -184,7 +189,7 @@ async function managementMenu(): Promise<void> {
         { value: "stop", label: "Stop monitoring", hint: "docker compose down" },
         { value: "reconfigure", label: "Reconfigure", hint: "Edit Telegram / network settings" },
         { value: "dashboard", label: "Open Dashboard", hint: "http://localhost:3000" },
-        { value: "frigate", label: "Open Frigate UI", hint: "http://localhost:5001" },
+        { value: "frigate", label: "Open Frigate UI", hint: getOS() === "windows" ? "http://localhost:5000" : "http://localhost:5001" },
         { value: "logs", label: "View logs", hint: "Live automation + detection logs" },
         { value: "exit", label: "Exit", hint: "Keep running in background" },
       ]
@@ -208,6 +213,9 @@ async function managementMenu(): Promise<void> {
   const s = p.spinner();
 
   if (action === "start") {
+    // Apply OS-specific networking fixes
+    applyPlatformFixes();
+
     // Check Docker first
     if (!isDockerRunning()) {
       s.start("Starting Docker Desktop...");
@@ -266,7 +274,8 @@ async function managementMenu(): Promise<void> {
   }
 
   if (action === "frigate") {
-    openInBrowser("http://localhost:5001");
+    const frigatePort = getOS() === "windows" ? 5000 : 5001;
+    openInBrowser(`http://localhost:${frigatePort}`);
     p.outro(pc.dim("Opening Frigate UI in browser..."));
     process.exit(0);
   }

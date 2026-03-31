@@ -2,7 +2,7 @@ import * as p from "@clack/prompts";
 import pc from "picocolors";
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { join } from "path";
-import { INSTALL_DIR, getLanIP } from "./utils.js";
+import { INSTALL_DIR, getLanIP, getOS } from "./utils.js";
 
 const ENV_PATH = join(INSTALL_DIR, ".env");
 const ENV_EXAMPLE_PATH = join(INSTALL_DIR, ".env.example");
@@ -89,10 +89,19 @@ export function getDefaultConfig(): EnvConfig {
   // Try reading existing .env first, fall back to hardcoded defaults
   const existing = readEnv();
   const detectedIP = getLanIP();
+  const os = getOS();
+
+  // On Windows, Frigate runs in host networking mode — other containers
+  // reach it via host.docker.internal instead of Docker DNS name
+  const frigateUrl = os === "windows"
+    ? "http://host.docker.internal:5000"
+    : "http://frigate:5000";
+
   return {
     ...DEFAULTS,
     ...existing,
     HOST_IP: existing?.HOST_IP || detectedIP,
+    FRIGATE_API_URL: existing?.FRIGATE_API_URL || frigateUrl,
   };
 }
 
