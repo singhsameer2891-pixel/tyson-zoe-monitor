@@ -91,6 +91,7 @@ async function firstRunFlow(): Promise<void> {
   try {
     const net = await ensureNetwork();
     const notes: string[] = [];
+    if (net.dhcpFixed) notes.push("DHCP auto-fixed subnet mismatch");
     if (net.staticIPUsed) notes.push("static IP fallback");
     if (net.dvrDiscovered) notes.push("DVR auto-discovered");
     const extra = notes.length > 0 ? pc.dim(` (${notes.join(", ")})`) : "";

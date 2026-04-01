@@ -11,6 +11,10 @@ export interface EnvConfig {
   TELEGRAM_BOT_TOKEN: string;
   TELEGRAM_CHAT_ID: string;
   GITHUB_GIST_TOKEN: string;
+  TWILIO_ACCOUNT_SID: string;
+  TWILIO_AUTH_TOKEN: string;
+  TWILIO_FROM_NUMBER: string;
+  TWILIO_TO_NUMBER: string;
   HOST_IP: string;
   NOTIFICATION_COOLDOWN_SECONDS: string;
   FRIGATE_API_URL: string;
@@ -62,6 +66,12 @@ export function writeEnv(config: EnvConfig): void {
     `VITE_API_URL=${config.VITE_API_URL}`,
     `HOST_IP=${config.HOST_IP}`,
     "",
+    "# Twilio (phone call alerts)",
+    `TWILIO_ACCOUNT_SID=${config.TWILIO_ACCOUNT_SID}`,
+    `TWILIO_AUTH_TOKEN=${config.TWILIO_AUTH_TOKEN}`,
+    `TWILIO_FROM_NUMBER=${config.TWILIO_FROM_NUMBER}`,
+    `TWILIO_TO_NUMBER=${config.TWILIO_TO_NUMBER}`,
+    "",
   ].join("\n");
 
   writeFileSync(ENV_PATH, content, "utf-8");
@@ -76,6 +86,10 @@ const DEFAULTS: EnvConfig = {
   TELEGRAM_BOT_TOKEN: "",
   TELEGRAM_CHAT_ID: "",
   GITHUB_GIST_TOKEN: "",
+  TWILIO_ACCOUNT_SID: "",
+  TWILIO_AUTH_TOKEN: "",
+  TWILIO_FROM_NUMBER: "",
+  TWILIO_TO_NUMBER: "",
   HOST_IP: "",
   NOTIFICATION_COOLDOWN_SECONDS: "60",
   FRIGATE_API_URL: "http://frigate:5000",
@@ -115,6 +129,7 @@ export async function collectConfig(askUser: boolean = false): Promise<EnvConfig
     console.log(`  ${pc.green("✔")} Telegram Bot: ${pc.dim("configured")}`);
     console.log(`  ${pc.green("✔")} Chat ID:      ${pc.cyan(defaults.TELEGRAM_CHAT_ID)}`);
     console.log(`  ${pc.green("✔")} Gist Token:   ${defaults.GITHUB_GIST_TOKEN ? pc.dim("configured") : pc.yellow("not set")}`);
+    console.log(`  ${pc.green("✔")} Twilio:       ${defaults.TWILIO_ACCOUNT_SID ? pc.dim("configured") : pc.yellow("not set")}`);
     console.log(`  ${pc.green("✔")} Host IP:      ${pc.cyan(defaults.HOST_IP)}`);
     console.log();
     return defaults;
@@ -153,12 +168,72 @@ export async function collectConfig(askUser: boolean = false): Promise<EnvConfig
   });
   if (p.isCancel(gistToken)) return null;
 
+  // Twilio config (optional)
+  const setupTwilio = await p.confirm({
+    message: "Set up Twilio phone call alerts? (optional)",
+    initialValue: !!defaults.TWILIO_ACCOUNT_SID,
+  });
+  if (p.isCancel(setupTwilio)) return null;
+
+  let twilioSid = defaults.TWILIO_ACCOUNT_SID;
+  let twilioAuthToken = defaults.TWILIO_AUTH_TOKEN;
+  let twilioFrom = defaults.TWILIO_FROM_NUMBER;
+  let twilioTo = defaults.TWILIO_TO_NUMBER;
+
+  if (setupTwilio) {
+    const sid = await p.text({
+      message: "Twilio Account SID",
+      placeholder: defaults.TWILIO_ACCOUNT_SID || "ACxxxxxxxx",
+      defaultValue: defaults.TWILIO_ACCOUNT_SID,
+      validate: (v) => {
+        if (!v || !v.startsWith("AC")) return "Must start with AC";
+      },
+    });
+    if (p.isCancel(sid)) return null;
+
+    const authTok = await p.text({
+      message: "Twilio Auth Token",
+      placeholder: defaults.TWILIO_AUTH_TOKEN || "",
+      defaultValue: defaults.TWILIO_AUTH_TOKEN,
+      validate: (v) => {
+        if (!v || v.length < 10) return "Auth token too short";
+      },
+    });
+    if (p.isCancel(authTok)) return null;
+
+    const from = await p.text({
+      message: "Twilio From Number (your Twilio phone number)",
+      placeholder: defaults.TWILIO_FROM_NUMBER || "+1xxxxxxxxxx",
+      defaultValue: defaults.TWILIO_FROM_NUMBER,
+      validate: (v) => {
+        if (!v || !v.startsWith("+")) return "Must start with + (e.g. +12602691187)";
+      },
+    });
+    if (p.isCancel(from)) return null;
+
+    const to = await p.text({
+      message: "Phone numbers to call (comma-separated, with country code)",
+      placeholder: defaults.TWILIO_TO_NUMBER || "+918828325860,+919876543210",
+      defaultValue: defaults.TWILIO_TO_NUMBER,
+      validate: (v) => {
+        if (!v || !v.startsWith("+")) return "Must start with + (e.g. +918828325860)";
+      },
+    });
+    if (p.isCancel(to)) return null;
+
+    twilioSid = String(sid);
+    twilioAuthToken = String(authTok);
+    twilioFrom = String(from);
+    twilioTo = String(to);
+  }
+
   const detectedIP = getLanIP();
 
   console.log();
   console.log(`  ${pc.green("✔")} Token:      ${pc.dim(String(token).slice(0, 10) + "...")}`);
   console.log(`  ${pc.green("✔")} Chat ID:    ${pc.cyan(String(chatId))}`);
   console.log(`  ${pc.green("✔")} Gist Token: ${gistToken ? pc.dim(String(gistToken).slice(0, 10) + "...") : pc.yellow("skipped")}`);
+  console.log(`  ${pc.green("✔")} Twilio:     ${twilioSid ? pc.dim("configured") : pc.yellow("skipped")}`);
   console.log(`  ${pc.green("✔")} Host IP:    ${pc.cyan(detectedIP)} ${pc.dim("(auto-detected)")}`);
   console.log();
 
@@ -167,6 +242,10 @@ export async function collectConfig(askUser: boolean = false): Promise<EnvConfig
     TELEGRAM_BOT_TOKEN: String(token),
     TELEGRAM_CHAT_ID: String(chatId),
     GITHUB_GIST_TOKEN: String(gistToken || ""),
+    TWILIO_ACCOUNT_SID: twilioSid,
+    TWILIO_AUTH_TOKEN: twilioAuthToken,
+    TWILIO_FROM_NUMBER: twilioFrom,
+    TWILIO_TO_NUMBER: twilioTo,
     HOST_IP: detectedIP,
   };
 }

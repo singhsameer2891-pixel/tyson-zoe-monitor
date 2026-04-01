@@ -32,6 +32,7 @@ function buildCaption(
     day: "numeric",
     month: "short",
     year: "numeric",
+    timeZone: "Asia/Kolkata",
   });
 
   return [

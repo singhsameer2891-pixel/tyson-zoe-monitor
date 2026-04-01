@@ -186,3 +186,40 @@
 |----|------|--------|-------|
 | 13.1 | Create `docs/user/alexa-setup-guide.md` — full walkthrough: Developer Console → Skill creation → Lambda deploy → Account linking → Device discovery → Routine setup | ⏳ | |
 | 13.2 | Create `docs/user/twilio-setup-guide.md` — account creation, phone number, verified caller IDs, env config | ⏳ | [PARALLEL with 13.1] |
+
+---
+
+## GROUP 14: CLI Network Subnet Validation & Auto-Fix ✅
+**Depends on:** GROUP 8
+**Summary:** Detect when Mac is on a different subnet than the DVR and auto-fix via DHCP before falling back to static IP assignment.
+
+| ID | Task | Status | Notes |
+|----|------|--------|-------|
+| 14.1 | Add subnet mismatch detection to `network.ts` — compare host IP subnet with DVR IP subnet from frigate.yml, flag mismatch | ✅ | `isSameSubnet()` helper |
+| 14.2 | Add DHCP auto-fix in `network.ts` — if subnet mismatch or self-assigned IP, run `networksetup -setdhcp Wi-Fi` (sudo prompt), wait for new IP, then re-validate | ✅ | `switchToDHCPAndWait()` — polls up to 10s |
+| 14.3 | Wire subnet check into `ensureNetwork()` flow — run before DVR reachability, show clear pass/fail status, re-validate after fix | ✅ | DHCP → static fallback on DVR subnet |
+
+---
+
+## GROUP 15: IST Timezone Fix ✅
+**Depends on:** GROUP 2, GROUP 5
+**Summary:** Ensure all timestamps (Telegram notifications, dashboard events, logs) display in IST (Asia/Kolkata).
+
+| ID | Task | Status | Notes |
+|----|------|--------|-------|
+| 15.1 | Fix `notifier.ts` — use `Asia/Kolkata` timezone in `toLocaleString` | ✅ | |
+| 15.2 | Fix `twilioNotifier.ts` — use `Asia/Kolkata` timezone | ✅ | [PARALLEL with 15.1] |
+| 15.3 | Fix dashboard `EventsLog.tsx` / `EventTable.tsx` — render timestamps in IST | ✅ | Replaced date-fns with explicit IST toLocaleString + TZ on Docker |
+
+---
+
+## GROUP 16: CLI Twilio Config Prompts ✅
+**Depends on:** GROUP 10
+**Summary:** Add Twilio credential prompts to CLI first-run and reconfigure flows so users are asked during installation.
+
+| ID | Task | Status | Notes |
+|----|------|--------|-------|
+| 16.1 | Update `twilioNotifier.ts` to support comma-separated `TWILIO_TO_NUMBER` — call all numbers in parallel | ✅ | Promise.all across all numbers |
+| 16.2 | Add Twilio prompts (Account SID, Auth Token, From Number, To Numbers) to `config.ts` — optional, skippable | ✅ | Confirm gate + validation |
+| 16.3 | Write Twilio env vars to `.env` in `writeEnvFile()` | ✅ | |
+| 16.4 | Bump CLI version in `package.json` | ✅ | 1.1.9 → 1.2.0 |

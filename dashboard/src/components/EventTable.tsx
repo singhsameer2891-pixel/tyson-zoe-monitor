@@ -1,5 +1,17 @@
-import { format } from 'date-fns'
 import SnapshotCard from './SnapshotCard'
+
+function formatIST(timestamp: string): string {
+  return new Date(timestamp).toLocaleString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true,
+    timeZone: 'Asia/Kolkata',
+  })
+}
 
 interface EventLogEntry {
   id?: number
@@ -60,7 +72,7 @@ export default function EventTable({ events, loading }: EventTableProps) {
                 <SnapshotCard eventId={event.event_id} />
               </td>
               <td className="py-2 px-3 text-gray-300 whitespace-nowrap">
-                {format(new Date(event.timestamp), 'dd MMM yyyy, hh:mm:ss a')}
+                {formatIST(event.timestamp)}
               </td>
               <td className="py-2 px-3 text-gray-300">{event.camera}</td>
               <td className="py-2 px-3 text-gray-300">{event.zone}</td>

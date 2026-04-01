@@ -54,6 +54,7 @@ services:
       RULES_PATH: /config/rules.json
       DB_PATH: /data/events.db
       FRIGATE_CONFIG_PATH: /config/config.yml
+      TZ: Asia/Kolkata
     env_file:
       - .env
     depends_on:

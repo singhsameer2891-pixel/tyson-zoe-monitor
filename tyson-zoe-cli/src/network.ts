@@ -85,6 +85,37 @@ export function getSubnet(ip: string): string {
   return `${parts[0]}.${parts[1]}.${parts[2]}`;
 }
 
+/** Check if two IPs are on the same /24 subnet */
+export function isSameSubnet(ip1: string, ip2: string): boolean {
+  return getSubnet(ip1) === getSubnet(ip2);
+}
+
+/** Switch to DHCP and wait for a new IP (up to waitMs). Returns new IP or null. */
+export async function switchToDHCPAndWait(waitMs: number = 8000): Promise<string | null> {
+  const os = getOS();
+  try {
+    if (os === "mac") {
+      execaSync("networksetup", ["-setdhcp", "Wi-Fi"]);
+    } else if (os === "windows") {
+      execaSync("powershell", [
+        "-Command",
+        "Set-NetIPInterface -InterfaceAlias Wi-Fi -Dhcp Enabled",
+      ]);
+    }
+  } catch {
+    return null;
+  }
+
+  // Poll for a new valid IP
+  const start = Date.now();
+  while (Date.now() - start < waitMs) {
+    await new Promise((r) => setTimeout(r, 1000));
+    const newIP = getLanIP();
+    if (isValidLanIP(newIP)) return newIP;
+  }
+  return null;
+}
+
 /** Try to fix DHCP failure by setting a static IP */
 export function tryStaticIPFix(subnet: string): boolean {
   const os = getOS();
@@ -115,7 +146,7 @@ export function tryStaticIPFix(subnet: string): boolean {
   return false;
 }
 
-/** Switch back to DHCP */
+/** Switch back to DHCP (fire-and-forget, no wait) */
 export function switchToDHCP(): void {
   const os = getOS();
   try {
@@ -247,22 +278,29 @@ export async function ensureNetwork(): Promise<{
   dvrIP: string;
   staticIPUsed: boolean;
   dvrDiscovered: boolean;
+  dhcpFixed: boolean;
 }> {
   let hostIP = getLanIP();
   let staticIPUsed = false;
   let dvrDiscovered = false;
+  let dhcpFixed = false;
 
   // Step 1: Check if we have a valid LAN IP
   if (!isValidLanIP(hostIP)) {
-    // DHCP failed — try static IP fix on 192.168.31.x (most common home subnet)
-    // Try common subnets
-    const subnets = ["192.168.31", "192.168.1", "192.168.0", "10.0.0"];
-    for (const subnet of subnets) {
-      const fixed = tryStaticIPFix(subnet);
-      if (fixed) {
-        hostIP = getLanIP();
-        staticIPUsed = true;
-        break;
+    // No valid IP at all — try DHCP reset first, then static IP fallback
+    const dhcpIP = await switchToDHCPAndWait(8000);
+    if (dhcpIP && isValidLanIP(dhcpIP)) {
+      hostIP = dhcpIP;
+      dhcpFixed = true;
+    } else {
+      const subnets = ["192.168.31", "192.168.1", "192.168.0", "10.0.0"];
+      for (const subnet of subnets) {
+        const fixed = tryStaticIPFix(subnet);
+        if (fixed) {
+          hostIP = getLanIP();
+          staticIPUsed = true;
+          break;
+        }
       }
     }
 
@@ -273,18 +311,45 @@ export async function ensureNetwork(): Promise<{
     }
   }
 
-  const subnet = getSubnet(hostIP);
-
-  // Step 2: Check if configured DVR IP is reachable
+  // Step 2: Subnet mismatch detection — host IP is valid but on a different subnet than DVR
   const configuredDVR = getCurrentDVRIP();
-  if (configuredDVR) {
-    const reachable = await isHostReachable(configuredDVR, 554);
-    if (reachable) {
-      return { hostIP, dvrIP: configuredDVR, staticIPUsed, dvrDiscovered: false };
+  if (configuredDVR && isValidLanIP(hostIP) && !isSameSubnet(hostIP, configuredDVR)) {
+    console.log(
+      `\n⚠  Subnet mismatch: your Mac is on ${getSubnet(hostIP)}.x but DVR is on ${getSubnet(configuredDVR)}.x`
+    );
+    console.log(`   Switching to DHCP to get the correct IP...`);
+
+    const dhcpIP = await switchToDHCPAndWait(10000);
+    if (dhcpIP && isValidLanIP(dhcpIP) && isSameSubnet(dhcpIP, configuredDVR)) {
+      hostIP = dhcpIP;
+      dhcpFixed = true;
+      console.log(`   ✓ DHCP fix worked — new IP: ${hostIP}`);
+    } else {
+      // DHCP didn't land on the right subnet — try static IP on DVR's subnet
+      const dvrSubnet = getSubnet(configuredDVR);
+      console.log(`   DHCP didn't fix it. Trying static IP on ${dvrSubnet}.x...`);
+      const fixed = tryStaticIPFix(dvrSubnet);
+      if (fixed) {
+        hostIP = getLanIP();
+        staticIPUsed = true;
+        console.log(`   ✓ Static IP assigned: ${hostIP}`);
+      } else {
+        console.log(`   ✗ Could not fix subnet mismatch. DVR may be unreachable.`);
+      }
     }
   }
 
-  // Step 3: DVR not reachable at configured IP — scan the network
+  const subnet = getSubnet(hostIP);
+
+  // Step 3: Check if configured DVR IP is reachable
+  if (configuredDVR) {
+    const reachable = await isHostReachable(configuredDVR, 554);
+    if (reachable) {
+      return { hostIP, dvrIP: configuredDVR, staticIPUsed, dvrDiscovered: false, dhcpFixed };
+    }
+  }
+
+  // Step 4: DVR not reachable at configured IP — scan the network
   const foundIP = await scanForDevice(subnet, 554);
   if (foundIP) {
     // Verify it's actually a DVR
@@ -295,13 +360,13 @@ export async function ensureNetwork(): Promise<{
       if (configuredDVR && configuredDVR !== foundIP) {
         updateFrigateConfigDVRIP(foundIP, configuredDVR);
       }
-      return { hostIP, dvrIP: foundIP, staticIPUsed, dvrDiscovered };
+      return { hostIP, dvrIP: foundIP, staticIPUsed, dvrDiscovered, dhcpFixed };
     }
   }
 
-  // Step 4: No DVR found — use configured IP and hope for the best
+  // Step 5: No DVR found — use configured IP and hope for the best
   if (configuredDVR) {
-    return { hostIP, dvrIP: configuredDVR, staticIPUsed, dvrDiscovered: false };
+    return { hostIP, dvrIP: configuredDVR, staticIPUsed, dvrDiscovered: false, dhcpFixed };
   }
 
   throw new Error(
