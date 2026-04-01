@@ -5,6 +5,7 @@ import mqtt from "mqtt";
 import { initDatabase, logEvent } from "./eventLogger";
 import { evaluateEvent, markNotified } from "./ruleEngine";
 import { sendTelegramNotification } from "./notifier";
+import { sendTwilioCall } from "./twilioNotifier";
 import { startApiServer } from "./apiServer";
 import { runDiagnostics } from "./diagnostics";
 import { pushDiagnostics } from "./gistLogger";
@@ -77,15 +78,15 @@ async function handleFrigateEvent(payload: string): Promise<void> {
   for (const match of matches) {
     console.log(`[rule] Match: "${match.rule.name}" → sending notification`);
 
-    // Send notification (retries every 5s for up to 300s on failure)
-    const sent = await sendTelegramNotification(
-      match.rule,
-      match.camera,
-      match.zone,
-      match.eventId
-    );
+    // Fire Telegram + Twilio in parallel
+    const [telegramSent, twilioSent] = await Promise.all([
+      sendTelegramNotification(match.rule, match.camera, match.zone, match.eventId),
+      sendTwilioCall(match.rule, match.camera, match.zone, match.eventId),
+    ]);
 
-    // Only mark cooldown if notification was actually delivered
+    const sent = telegramSent || twilioSent;
+
+    // Only mark cooldown if at least one notification was delivered
     if (sent) {
       markNotified(match.rule.id);
     }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
-import { Save, CheckCircle, AlertCircle } from 'lucide-react'
+import { Save, CheckCircle, AlertCircle, Phone } from 'lucide-react'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000'
 
@@ -14,6 +14,10 @@ export default function Settings() {
   const [botToken, setBotToken] = useState('')
   const [chatId, setChatId] = useState('')
   const [cooldown, setCooldown] = useState('60')
+  const [twilioSid, setTwilioSid] = useState('')
+  const [twilioToken, setTwilioToken] = useState('')
+  const [twilioFrom, setTwilioFrom] = useState('')
+  const [twilioTo, setTwilioTo] = useState('')
   const [health, setHealth] = useState<HealthStatus | null>(null)
   const [saved, setSaved] = useState(false)
 
@@ -139,6 +143,60 @@ export default function Settings() {
           </div>
         </div>
       </form>
+
+      {/* Twilio Config */}
+      <div className="bg-gray-900 border border-gray-800 rounded-lg p-5 space-y-4 mt-6">
+        <div className="flex items-center gap-2">
+          <Phone className="h-4 w-4 text-emerald-400" />
+          <h2 className="text-sm font-medium text-gray-300">Twilio Phone Call Alerts</h2>
+        </div>
+        <p className="text-xs text-gray-500">
+          When configured, the system will make a phone call in parallel with the Telegram notification on every alert. Update your .env file and restart.
+        </p>
+
+        <div>
+          <label className={labelClass}>Account SID</label>
+          <input
+            type="password"
+            className={inputClass}
+            value={twilioSid}
+            onChange={(e) => setTwilioSid(e.target.value)}
+            placeholder="Set via TWILIO_ACCOUNT_SID in .env"
+          />
+        </div>
+
+        <div>
+          <label className={labelClass}>Auth Token</label>
+          <input
+            type="password"
+            className={inputClass}
+            value={twilioToken}
+            onChange={(e) => setTwilioToken(e.target.value)}
+            placeholder="Set via TWILIO_AUTH_TOKEN in .env"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className={labelClass}>From Number</label>
+            <input
+              className={inputClass}
+              value={twilioFrom}
+              onChange={(e) => setTwilioFrom(e.target.value)}
+              placeholder="Set via TWILIO_FROM_NUMBER in .env"
+            />
+          </div>
+          <div>
+            <label className={labelClass}>To Number</label>
+            <input
+              className={inputClass}
+              value={twilioTo}
+              onChange={(e) => setTwilioTo(e.target.value)}
+              placeholder="Set via TWILIO_TO_NUMBER in .env"
+            />
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

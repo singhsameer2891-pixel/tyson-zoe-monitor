@@ -132,17 +132,17 @@
 
 ---
 
-## GROUP 10: Twilio Phone Call Integration
+## GROUP 10: Twilio Phone Call Integration ✅
 **Depends on:** GROUP 2
 **Summary:** Add automated phone call alerts via Twilio when a rule matches — fires in parallel with Telegram.
 
 | ID | Task | Status | Notes |
 |----|------|--------|-------|
-| 10.1 | Install `twilio` SDK in `services/automation/` | ⏳ | |
-| 10.2 | Create `src/twilioNotifier.ts` — TwiML voice call with spoken alert message, retry if no answer (2 retries) | ⏳ | |
-| 10.3 | Add Twilio env vars to `.env.example` | ⏳ | [PARALLEL with 10.2] |
-| 10.4 | Wire Twilio call into `index.ts` notification flow — fire in parallel with Telegram | ⏳ | |
-| 10.5 | Update dashboard `Settings.tsx` with Twilio config section | ⏳ | |
+| 10.1 | Install `twilio` SDK in `services/automation/` | ✅ | |
+| 10.2 | Create `src/twilioNotifier.ts` — TwiML voice call with spoken alert message, retry if no answer (2 retries) | ✅ | |
+| 10.3 | Add Twilio env vars to `.env.example` | ✅ | [PARALLEL with 10.2] |
+| 10.4 | Wire Twilio call into `index.ts` notification flow — fire in parallel with Telegram | ✅ | |
+| 10.5 | Update dashboard `Settings.tsx` with Twilio config section | ✅ | |
 
 ---
 
