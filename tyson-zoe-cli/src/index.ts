@@ -143,7 +143,7 @@ async function firstRunFlow(): Promise<void> {
 
   // Step 6: Health check
   const health = await getHealthStatus();
-  const fPort = getOS() === "windows" ? 5000 : 5001;
+  const fPort = getOS() === "windows" ? 5000 : 5050;
 
   console.log();
   const box = [
@@ -189,7 +189,7 @@ async function managementMenu(): Promise<void> {
         { value: "stop", label: "Stop monitoring", hint: "docker compose down" },
         { value: "reconfigure", label: "Reconfigure", hint: "Edit Telegram / network settings" },
         { value: "dashboard", label: "Open Dashboard", hint: "http://localhost:3000" },
-        { value: "frigate", label: "Open Frigate UI", hint: getOS() === "windows" ? "http://localhost:5000" : "http://localhost:5001" },
+        { value: "frigate", label: "Open Frigate UI", hint: getOS() === "windows" ? "http://localhost:5000" : "http://localhost:5050" },
         { value: "logs", label: "View logs", hint: "Live automation + detection logs" },
         { value: "exit", label: "Exit", hint: "Keep running in background" },
       ]
@@ -274,7 +274,7 @@ async function managementMenu(): Promise<void> {
   }
 
   if (action === "frigate") {
-    const frigatePort = getOS() === "windows" ? 5000 : 5001;
+    const frigatePort = getOS() === "windows" ? 5000 : 5050;
     openInBrowser(`http://localhost:${frigatePort}`);
     p.outro(pc.dim("Opening Frigate UI in browser..."));
     process.exit(0);

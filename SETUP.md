@@ -31,7 +31,7 @@ docker compose up -d
 | Service | URL |
 |---|---|
 | Dashboard | http://localhost:3000 |
-| Frigate UI | http://localhost:5001 |
+| Frigate UI | http://localhost:5050 |
 | Automation API | http://localhost:4000 |
 
 ## DVR Details
@@ -55,7 +55,7 @@ docker compose up -d
 
 ## Zone Configuration
 
-Zones are configured via Frigate UI: http://localhost:5001/settings → Masks / Zones
+Zones are configured via Frigate UI: http://localhost:5050/settings → Masks / Zones
 
 | Zone | Camera | Objects | Purpose |
 |---|---|---|---|

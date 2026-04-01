@@ -30,13 +30,13 @@ function patchDockerCompose(): void {
 
     // Remove ports mapping from frigate (host mode doesn't use them)
     compose = compose.replace(
-      /(\s+)ports:\s*\n\s+- "5001:5000"\s*#[^\n]*\n\s+- "8554:8554"\s*#[^\n]*/,
+      /(\s+)ports:\s*\n\s+- "5050:5000"\s*#[^\n]*\n\s+- "8554:8554"\s*#[^\n]*/,
       ""
     );
 
     // Also handle without comments
     compose = compose.replace(
-      /(\s+)ports:\s*\n\s+- "5001:5000"\s*\n\s+- "8554:8554"\s*/,
+      /(\s+)ports:\s*\n\s+- "5050:5000"\s*\n\s+- "8554:8554"\s*/,
       ""
     );
 
@@ -91,9 +91,9 @@ function patchDockerCompose(): void {
 
     let patched = result.join("\n");
 
-    // Change dashboard's Frigate URL from port 5001 to 5000 (host mode uses Frigate's native port)
+    // Change dashboard's Frigate URL from port 5050 to 5000 (host mode uses Frigate's native port)
     patched = patched.replace(
-      /VITE_FRIGATE_URL:\s*"http:\/\/\$\{HOST_IP:-localhost\}:5001"/,
+      /VITE_FRIGATE_URL:\s*"http:\/\/\$\{HOST_IP:-localhost\}:5050"/,
       'VITE_FRIGATE_URL: "http://${HOST_IP:-localhost}:5000"'
     );
 

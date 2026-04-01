@@ -21,7 +21,7 @@ services:
     privileged: true
     shm_size: "256mb"
     ports:
-      - "5001:5000"   # Frigate web UI (5000 taken by macOS AirPlay)
+      - "5050:5000"   # Frigate web UI (5000/5001 conflict with macOS AirPlay)
       - "8554:8554"   # RTSP restream
     volumes:
       - ./config/frigate.yml:/config/config.yml
@@ -69,7 +69,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_URL: ""
-        VITE_FRIGATE_URL: "http://${HOST_IP:-localhost}:5001"
+        VITE_FRIGATE_URL: "http://${HOST_IP:-localhost}:5050"
     container_name: cctv-dashboard
     restart: unless-stopped
     ports:
