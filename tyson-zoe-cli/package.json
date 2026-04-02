@@ -1,6 +1,6 @@
 {
   "name": "tyson-zoe-monitor",
-  "version": "1.2.0",
+  "version": "1.2.2",
   "description": "One-command setup for TysonZoeMonitor — Home CCTV intelligence for dog monitoring & intrusion detection.",
   "type": "module",
   "bin": {

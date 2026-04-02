@@ -99,7 +99,7 @@ export async function startServices(): Promise<void> {
       {
         title: "Starting services",
         task: async () => {
-          await execa("docker", ["compose", "up", "-d"], {
+          await execa("docker", ["compose", "up", "-d", "--force-recreate"], {
             ...COMPOSE_OPTS,
             timeout: 120000,
           });
@@ -131,10 +131,19 @@ export async function startServices(): Promise<void> {
 }
 
 export async function stopServices(): Promise<void> {
-  await execa("docker", ["compose", "down"], {
+  await execa("docker", ["compose", "down", "--remove-orphans"], {
     ...COMPOSE_OPTS,
     timeout: 60000,
   });
+  // Force-remove named containers in case compose down didn't clean up
+  const names = ["cctv-mosquitto", "cctv-frigate", "cctv-automation", "cctv-dashboard"];
+  for (const name of names) {
+    try {
+      await execa("docker", ["rm", "-f", name], { timeout: 10000 });
+    } catch {
+      // already gone — fine
+    }
+  }
 }
 
 export async function showLogs(): Promise<void> {
