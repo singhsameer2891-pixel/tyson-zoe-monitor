@@ -237,13 +237,27 @@
 
 ---
 
-## GROUP 18: Boundary Alert Schedule + CLI Toggle
+## GROUP 18: Monitoring Modes (Home + Tyson/Zoe) + CLI Toggle/Schedule
 **Depends on:** GROUP 17
-**Summary:** Add CLI menu options to toggle boundary alerts ON/OFF and set daily time range (IST) via the automation API.
+**Summary:** Two monitoring modes — "Home Monitoring" (boundary cross, person) and "Tyson/Zoe Monitoring" (dog detection). Each can be manually toggled ON/OFF or scheduled for a daily time range (IST) via CLI.
 
 | ID | Task | Status | Notes |
 |----|------|--------|-------|
 | 18.1 | Add `PUT /api/rules/:id` endpoint to `apiServer.ts` — update rule enabled/timeRestriction | ⏳ | |
-| 18.2 | Add `PUT /api/rules/boundary/schedule` endpoint — bulk-set time range on all boundary rules | ⏳ | |
-| 18.3 | Add "Boundary Alerts" submenu to CLI `index.ts` — toggle ON/OFF, set schedule (start/end hour IST) | ⏳ | |
-| 18.4 | Persist rule changes to `rules.json` file on disk from API | ⏳ | |
+| 18.2 | Add `PUT /api/rules/mode` endpoint — bulk enable/disable rules by mode (home/tyson-zoe) | ⏳ | |
+| 18.3 | Tag rules in rules.json with `mode` field: `"home"` (boundary rules) or `"tyson-zoe"` (dog rules) | ⏳ | |
+| 18.4 | Add "Monitoring Modes" submenu to CLI — manual ON/OFF toggle + scheduled time range for each mode | ⏳ | |
+| 18.5 | Persist rule changes to `rules.json` on disk from API | ⏳ | |
+
+---
+
+## GROUP 19: Config File Auto-Import
+**Depends on:** GROUP 16
+**Summary:** Allow users to place a `.md` config file with all credentials in a predefined folder. CLI reads it and auto-populates .env instead of asking each field interactively.
+
+| ID | Task | Status | Notes |
+|----|------|--------|-------|
+| 19.1 | Define config file format (`~/TysonZoeMonitor/config-input/setup.md`) with YAML frontmatter or key-value pairs | ⏳ | |
+| 19.2 | Create config-input folder if it doesn't exist during CLI first-run | ⏳ | |
+| 19.3 | Add file detection in `config.ts` — if config file exists, parse and auto-populate all env vars, skip interactive prompts | ⏳ | |
+| 19.4 | Show confirmation of imported values, allow user to override before saving | ⏳ | |
