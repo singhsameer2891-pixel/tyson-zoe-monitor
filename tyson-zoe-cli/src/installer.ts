@@ -1,5 +1,6 @@
 import { execaSync, execa } from "execa";
-import { existsSync } from "fs";
+import { existsSync, copyFileSync, mkdirSync } from "fs";
+import { join } from "path";
 import { INSTALL_DIR, REPO_URL, getOS, openInBrowser } from "./utils.js";
 
 export function isDockerInstalled(): boolean {
@@ -52,7 +53,18 @@ export function isProjectInstalled(): boolean {
 
 export async function cloneProject(): Promise<void> {
   if (existsSync(INSTALL_DIR)) {
-    // Stash any local changes (e.g. user-modified frigate.yml), pull latest, then re-apply
+    const setupFile = join(INSTALL_DIR, "config-input", "setup.md");
+    const envFile = join(INSTALL_DIR, ".env");
+    const backupSetup = join(INSTALL_DIR, "..", ".tzm-setup-backup.md");
+    const backupEnv = join(INSTALL_DIR, "..", ".tzm-env-backup");
+
+    // Backup user files before git operations (untracked, git won't preserve them)
+    const hasSetup = existsSync(setupFile);
+    const hasEnv = existsSync(envFile);
+    if (hasSetup) copyFileSync(setupFile, backupSetup);
+    if (hasEnv) copyFileSync(envFile, backupEnv);
+
+    // Stash tracked changes, pull latest, re-apply
     try {
       await execa("git", ["-C", INSTALL_DIR, "stash"], { timeout: 10000 });
     } catch {
@@ -67,6 +79,15 @@ export async function cloneProject(): Promise<void> {
       // stash pop conflict — remote changes win, local changes dropped
       await execa("git", ["-C", INSTALL_DIR, "checkout", "."], { timeout: 10000 });
       await execa("git", ["-C", INSTALL_DIR, "stash", "drop"], { timeout: 10000 }).catch(() => {});
+    }
+
+    // Restore user files
+    if (hasSetup && existsSync(backupSetup)) {
+      mkdirSync(join(INSTALL_DIR, "config-input"), { recursive: true });
+      copyFileSync(backupSetup, setupFile);
+    }
+    if (hasEnv && existsSync(backupEnv)) {
+      copyFileSync(backupEnv, envFile);
     }
   } else {
     await execa("git", ["clone", REPO_URL, INSTALL_DIR], {
