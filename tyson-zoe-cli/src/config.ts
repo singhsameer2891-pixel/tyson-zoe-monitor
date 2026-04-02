@@ -4,7 +4,8 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 
 import { join } from "path";
 import { INSTALL_DIR, getLanIP, getOS } from "./utils.js";
 
-const CONFIG_INPUT_DIR = join(INSTALL_DIR, "config-input");
+import { homedir } from "os";
+const CONFIG_INPUT_DIR = join(homedir(), "TysonZoeMonitor-config");
 
 const ENV_PATH = join(INSTALL_DIR, ".env");
 const ENV_EXAMPLE_PATH = join(INSTALL_DIR, ".env.example");
@@ -143,8 +144,9 @@ function findConfigFile(): string | null {
     mkdirSync(CONFIG_INPUT_DIR, { recursive: true });
     return null;
   }
-  const files = readdirSync(CONFIG_INPUT_DIR).filter((f) => f.endsWith(".md"));
-  return files.length > 0 ? join(CONFIG_INPUT_DIR, files[0]) : null;
+  // Only read setup.md, ignore example files
+  const setupFile = join(CONFIG_INPUT_DIR, "setup.md");
+  return existsSync(setupFile) ? setupFile : null;
 }
 
 export async function collectConfig(askUser: boolean = false): Promise<EnvConfig | null> {
