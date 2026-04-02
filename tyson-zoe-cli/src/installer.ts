@@ -52,10 +52,22 @@ export function isProjectInstalled(): boolean {
 
 export async function cloneProject(): Promise<void> {
   if (existsSync(INSTALL_DIR)) {
-    // Pull latest instead of cloning
+    // Stash any local changes (e.g. user-modified frigate.yml), pull latest, then re-apply
+    try {
+      await execa("git", ["-C", INSTALL_DIR, "stash"], { timeout: 10000 });
+    } catch {
+      // nothing to stash — fine
+    }
     await execa("git", ["-C", INSTALL_DIR, "pull", "--ff-only"], {
       timeout: 60000,
     });
+    try {
+      await execa("git", ["-C", INSTALL_DIR, "stash", "pop"], { timeout: 10000 });
+    } catch {
+      // stash pop conflict — remote changes win, local changes dropped
+      await execa("git", ["-C", INSTALL_DIR, "checkout", "."], { timeout: 10000 });
+      await execa("git", ["-C", INSTALL_DIR, "stash", "drop"], { timeout: 10000 }).catch(() => {});
+    }
   } else {
     await execa("git", ["clone", REPO_URL, INSTALL_DIR], {
       timeout: 120000,
