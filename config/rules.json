@@ -22,18 +22,58 @@
     "enabled": true
   },
   {
-    "id": "rule-intruder-night",
-    "name": "Nighttime Boundary Breach",
+    "id": "rule-boundary-entrance",
+    "name": "Boundary Cross — Entrance",
+    "camera": "camera_entrance",
+    "zone": "boundary",
+    "objectType": "person",
+    "action": "entered",
+    "timeRestriction": { "enabled": false },
+    "notificationTemplate": "⚠️ ALERT: Person crossed boundary on Entrance camera!",
+    "enabled": true
+  },
+  {
+    "id": "rule-boundary-garden",
+    "name": "Boundary Cross — Garden",
     "camera": "camera_garden",
     "zone": "garden_zone",
     "objectType": "person",
     "action": "entered",
-    "timeRestriction": {
-      "enabled": true,
-      "startHour": 23,
-      "endHour": 6
-    },
-    "notificationTemplate": "⚠️ ALERT: Person detected at boundary!",
+    "timeRestriction": { "enabled": false },
+    "notificationTemplate": "⚠️ ALERT: Person crossed boundary on Garden camera!",
+    "enabled": true
+  },
+  {
+    "id": "rule-boundary-cam1",
+    "name": "Boundary Cross — Camera 1",
+    "camera": "camera_1",
+    "zone": "boundary",
+    "objectType": "person",
+    "action": "entered",
+    "timeRestriction": { "enabled": false },
+    "notificationTemplate": "⚠️ ALERT: Person crossed boundary on Camera 1!",
+    "enabled": true
+  },
+  {
+    "id": "rule-boundary-cam2",
+    "name": "Boundary Cross — Camera 2",
+    "camera": "camera_2",
+    "zone": "boundary",
+    "objectType": "person",
+    "action": "entered",
+    "timeRestriction": { "enabled": false },
+    "notificationTemplate": "⚠️ ALERT: Person crossed boundary on Camera 2!",
+    "enabled": true
+  },
+  {
+    "id": "rule-boundary-cam3",
+    "name": "Boundary Cross — Camera 3",
+    "camera": "camera_3",
+    "zone": "boundary",
+    "objectType": "person",
+    "action": "entered",
+    "timeRestriction": { "enabled": false },
+    "notificationTemplate": "⚠️ ALERT: Person crossed boundary on Camera 3!",
     "enabled": true
   }
 ]

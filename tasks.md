@@ -223,3 +223,27 @@
 | 16.2 | Add Twilio prompts (Account SID, Auth Token, From Number, To Numbers) to `config.ts` — optional, skippable | ✅ | Confirm gate + validation |
 | 16.3 | Write Twilio env vars to `.env` in `writeEnvFile()` | ✅ | |
 | 16.4 | Bump CLI version in `package.json` | ✅ | 1.1.9 → 1.2.0 |
+
+---
+
+## GROUP 17: Add All 5 Cameras + Boundary Rules
+**Depends on:** GROUP 2
+**Summary:** Add channels 1-3 to Frigate config, boundary zones on all cameras, matching alert rules.
+
+| ID | Task | Status | Notes |
+|----|------|--------|-------|
+| 17.1 | Add channels 1-3 to frigate.yml go2rtc + cameras section with boundary zones | ✅ | User refined zones manually |
+| 17.2 | Add boundary rules for all 5 cameras in rules.json | ✅ | Entrance + garden boundary rules added |
+
+---
+
+## GROUP 18: Boundary Alert Schedule + CLI Toggle
+**Depends on:** GROUP 17
+**Summary:** Add CLI menu options to toggle boundary alerts ON/OFF and set daily time range (IST) via the automation API.
+
+| ID | Task | Status | Notes |
+|----|------|--------|-------|
+| 18.1 | Add `PUT /api/rules/:id` endpoint to `apiServer.ts` — update rule enabled/timeRestriction | ⏳ | |
+| 18.2 | Add `PUT /api/rules/boundary/schedule` endpoint — bulk-set time range on all boundary rules | ⏳ | |
+| 18.3 | Add "Boundary Alerts" submenu to CLI `index.ts` — toggle ON/OFF, set schedule (start/end hour IST) | ⏳ | |
+| 18.4 | Persist rule changes to `rules.json` file on disk from API | ⏳ | |

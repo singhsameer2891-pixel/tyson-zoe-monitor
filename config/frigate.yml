@@ -10,24 +10,95 @@ detectors:
 # go2rtc handles RTSP auth better than raw ffmpeg (avoids @ in password issues)
 go2rtc:
   streams:
-    camera_garden:
-      - rtsp://frigate:Frigate1!@192.168.31.245:554/cam/realmonitor?channel=5&subtype=0
-    camera_garden_sub:
-      - rtsp://frigate:Frigate1!@192.168.31.245:554/cam/realmonitor?channel=5&subtype=1
+    camera_1:
+      - rtsp://frigate:Frigate1!@192.168.31.245:554/cam/realmonitor?channel=1&subtype=0
+    camera_1_sub:
+      - rtsp://frigate:Frigate1!@192.168.31.245:554/cam/realmonitor?channel=1&subtype=1
+    camera_2:
+      - rtsp://frigate:Frigate1!@192.168.31.245:554/cam/realmonitor?channel=2&subtype=0
+    camera_2_sub:
+      - rtsp://frigate:Frigate1!@192.168.31.245:554/cam/realmonitor?channel=2&subtype=1
+    camera_3:
+      - rtsp://frigate:Frigate1!@192.168.31.245:554/cam/realmonitor?channel=3&subtype=0
+    camera_3_sub:
+      - rtsp://frigate:Frigate1!@192.168.31.245:554/cam/realmonitor?channel=3&subtype=1
     camera_entrance:
       - rtsp://frigate:Frigate1!@192.168.31.245:554/cam/realmonitor?channel=4&subtype=0
     camera_entrance_sub:
       - rtsp://frigate:Frigate1!@192.168.31.245:554/cam/realmonitor?channel=4&subtype=1
+    camera_garden:
+      - rtsp://frigate:Frigate1!@192.168.31.245:554/cam/realmonitor?channel=5&subtype=0
+    camera_garden_sub:
+      - rtsp://frigate:Frigate1!@192.168.31.245:554/cam/realmonitor?channel=5&subtype=1
 
 cameras:
-  # ──────────────────────────────────────────────────────
-  # GARDEN CAMERA — Monitors Tyson & Zoe entering garden
-  # ──────────────────────────────────────────────────────
-  # Replace <RTSP_URL> with your camera's RTSP stream URL.
-  # Common formats:
-  #   Hikvision: rtsp://user:pass@IP:554/Streaming/Channels/101
-  #   Dahua:     rtsp://user:pass@IP:554/cam/realmonitor?channel=1&subtype=0
-  #   CP Plus:   rtsp://user:pass@IP:554/cam/realmonitor?channel=1&subtype=1
+  # ── Channel 1 ──
+  camera_1:
+    ffmpeg:
+      inputs:
+        - path: rtsp://127.0.0.1:8554/camera_1_sub
+          roles: [detect]
+        - path: rtsp://127.0.0.1:8554/camera_1
+          roles: [record]
+    detect:
+      enabled: true
+      width: 640
+      height: 360
+      fps: 5
+    objects:
+      track: [person, dog]
+    zones:
+      boundary:
+        coordinates: 0,0.581,0.688,0.027,1,0.061,1,1,0,1
+        objects: person
+        inertia: 1
+        loitering_time: 0
+
+  # ── Channel 2 ──
+  camera_2:
+    ffmpeg:
+      inputs:
+        - path: rtsp://127.0.0.1:8554/camera_2_sub
+          roles: [detect]
+        - path: rtsp://127.0.0.1:8554/camera_2
+          roles: [record]
+    detect:
+      enabled: true
+      width: 640
+      height: 360
+      fps: 5
+    objects:
+      track: [person, dog]
+    zones:
+      boundary:
+        coordinates: 0,0,0.32,0.214,1,0.588,1,1,0,1,0,0.169
+        objects: person
+        inertia: 1
+        loitering_time: 0
+
+  # ── Channel 3 ──
+  camera_3:
+    ffmpeg:
+      inputs:
+        - path: rtsp://127.0.0.1:8554/camera_3_sub
+          roles: [detect]
+        - path: rtsp://127.0.0.1:8554/camera_3
+          roles: [record]
+    detect:
+      enabled: true
+      width: 640
+      height: 360
+      fps: 5
+    objects:
+      track: [person, dog]
+    zones:
+      boundary:
+        coordinates: 0,0.892,0.751,0.087,0.779,0,1,0,1,1,0,1
+        objects: person
+        inertia: 1
+        loitering_time: 0
+
+  # ── GARDEN CAMERA (Channel 5) — Monitors Tyson & Zoe entering garden ──
   camera_garden:
     ffmpeg:
       inputs:
@@ -47,9 +118,10 @@ cameras:
       # Use Frigate's debug view at http://localhost:5000 to draw zones
       # and copy the coordinates here. Using full frame as placeholder.
       garden_zone:
-        coordinates: 0.165,0.789,0.319,0.674,0.559,1,0.254,1
-        objects: dog
-        inertia: 3
+        coordinates: 
+          0,0.305,0.137,0.199,0.129,0.078,0.22,0.04,0.305,0.053,0.439,0.114,1,0.459,1,1,0,1
+        objects: person
+        inertia: 1
         loitering_time: 0
   camera_entrance:
     ffmpeg:
@@ -73,6 +145,12 @@ cameras:
         objects:
           - dog
           - person
+      boundary:
+        coordinates: 
+          0.512,0.071,0.244,0.116,0.041,0.158,0.037,0.245,0.038,0.395,0.033,0.435,0,0.592,0.003,0.985,0.515,1,0.733,1,1,1,1,0,0.531,0
+        inertia: 1
+        loitering_time: 0
+        objects: person
 record:
   enabled: true
   alerts:
