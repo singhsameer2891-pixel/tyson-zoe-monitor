@@ -400,6 +400,11 @@ async function managementMenu(): Promise<void> {
       }
     }
 
+    // Open dashboard + Frigate UI in browser
+    const frigatePort = getOS() === "windows" ? 5000 : 5050;
+    openInBrowser("http://localhost:3000");
+    openInBrowser(`http://localhost:${frigatePort}`);
+
     p.outro(`${pc.green("✔")} TysonZoeMonitor is running! Dashboard: ${pc.cyan("http://localhost:3000")}`);
     process.exit(0);
   }
