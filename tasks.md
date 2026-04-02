@@ -237,27 +237,27 @@
 
 ---
 
-## GROUP 18: Monitoring Modes (Home + Tyson/Zoe) + CLI Toggle/Schedule
+## GROUP 18: Monitoring Modes (Home + Tyson/Zoe) + CLI Toggle/Schedule ✅
 **Depends on:** GROUP 17
 **Summary:** Two monitoring modes — "Home Monitoring" (boundary cross, person) and "Tyson/Zoe Monitoring" (dog detection). Each can be manually toggled ON/OFF or scheduled for a daily time range (IST) via CLI.
 
 | ID | Task | Status | Notes |
 |----|------|--------|-------|
-| 18.1 | Add `PUT /api/rules/:id` endpoint to `apiServer.ts` — update rule enabled/timeRestriction | ⏳ | |
-| 18.2 | Add `PUT /api/rules/mode` endpoint — bulk enable/disable rules by mode (home/tyson-zoe) | ⏳ | |
-| 18.3 | Tag rules in rules.json with `mode` field: `"home"` (boundary rules) or `"tyson-zoe"` (dog rules) | ⏳ | |
-| 18.4 | Add "Monitoring Modes" submenu to CLI — manual ON/OFF toggle + scheduled time range for each mode | ⏳ | |
-| 18.5 | Persist rule changes to `rules.json` on disk from API | ⏳ | |
+| 18.1 | Add `PUT /api/rules/:id` endpoint to `apiServer.ts` — update rule enabled/timeRestriction | ✅ | |
+| 18.2 | Add `PUT /api/rules/mode` endpoint — bulk enable/disable rules by mode (home/tyson-zoe) | ✅ | + GET /api/modes |
+| 18.3 | Tag rules in rules.json with `mode` field: `"home"` (boundary rules) or `"tyson-zoe"` (dog rules) | ✅ | |
+| 18.4 | Add "Monitoring Modes" submenu to CLI — manual ON/OFF toggle + scheduled time range for each mode | ✅ | |
+| 18.5 | Persist rule changes to `rules.json` on disk from API | ✅ | saveRules() in PUT endpoints |
 
 ---
 
-## GROUP 19: Config File Auto-Import
+## GROUP 19: Config File Auto-Import ✅
 **Depends on:** GROUP 16
 **Summary:** Allow users to place a `.md` config file with all credentials in a predefined folder. CLI reads it and auto-populates .env instead of asking each field interactively.
 
 | ID | Task | Status | Notes |
 |----|------|--------|-------|
-| 19.1 | Define config file format (`~/TysonZoeMonitor/config-input/setup.md`) with YAML frontmatter or key-value pairs | ⏳ | |
-| 19.2 | Create config-input folder if it doesn't exist during CLI first-run | ⏳ | |
-| 19.3 | Add file detection in `config.ts` — if config file exists, parse and auto-populate all env vars, skip interactive prompts | ⏳ | |
-| 19.4 | Show confirmation of imported values, allow user to override before saving | ⏳ | |
+| 19.1 | Define config file format (`~/TysonZoeMonitor/config-input/setup.md`) with key-value pairs | ✅ | setup.example.md template |
+| 19.2 | Create config-input folder if it doesn't exist during CLI first-run | ✅ | mkdirSync in findConfigFile() |
+| 19.3 | Add file detection in `config.ts` — if config file exists, parse and auto-populate all env vars, skip interactive prompts | ✅ | |
+| 19.4 | Show confirmation of imported values, allow user to override before saving | ✅ | Prints imported values |

@@ -1,8 +1,10 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
-import { readFileSync, writeFileSync, existsSync } from "fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from "fs";
 import { join } from "path";
 import { INSTALL_DIR, getLanIP, getOS } from "./utils.js";
+
+const CONFIG_INPUT_DIR = join(INSTALL_DIR, "config-input");
 
 const ENV_PATH = join(INSTALL_DIR, ".env");
 const ENV_EXAMPLE_PATH = join(INSTALL_DIR, ".env.example");
@@ -119,8 +121,49 @@ export function getDefaultConfig(): EnvConfig {
   };
 }
 
+/** Parse a setup.md config file — key: value pairs, ignoring comments and headers */
+function parseConfigFile(filePath: string): Partial<EnvConfig> {
+  const raw = readFileSync(filePath, "utf-8");
+  const config: Record<string, string> = {};
+  for (const line of raw.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#") || trimmed.startsWith("---") || trimmed.startsWith("//")) continue;
+    const colonIdx = trimmed.indexOf(":");
+    if (colonIdx === -1) continue;
+    const key = trimmed.slice(0, colonIdx).trim().toUpperCase().replace(/\s+/g, "_");
+    const value = trimmed.slice(colonIdx + 1).trim();
+    if (value) config[key] = value;
+  }
+  return config as unknown as Partial<EnvConfig>;
+}
+
+/** Check for config file in config-input folder */
+function findConfigFile(): string | null {
+  if (!existsSync(CONFIG_INPUT_DIR)) {
+    mkdirSync(CONFIG_INPUT_DIR, { recursive: true });
+    return null;
+  }
+  const files = readdirSync(CONFIG_INPUT_DIR).filter((f) => f.endsWith(".md"));
+  return files.length > 0 ? join(CONFIG_INPUT_DIR, files[0]) : null;
+}
+
 export async function collectConfig(askUser: boolean = false): Promise<EnvConfig | null> {
   const defaults = getDefaultConfig();
+
+  // Check for config file auto-import
+  const configFile = findConfigFile();
+  if (configFile && !askUser) {
+    console.log(`  ${pc.green("✔")} Config file found: ${pc.cyan(configFile)}`);
+    const imported = parseConfigFile(configFile);
+    const merged = { ...defaults, ...imported, HOST_IP: getLanIP() };
+    console.log(`  ${pc.green("✔")} Telegram Bot: ${merged.TELEGRAM_BOT_TOKEN ? pc.dim("imported") : pc.yellow("not set")}`);
+    console.log(`  ${pc.green("✔")} Chat ID:      ${merged.TELEGRAM_CHAT_ID ? pc.cyan(merged.TELEGRAM_CHAT_ID) : pc.yellow("not set")}`);
+    console.log(`  ${pc.green("✔")} Twilio:       ${merged.TWILIO_ACCOUNT_SID ? pc.dim("imported") : pc.yellow("not set")}`);
+    console.log(`  ${pc.green("✔")} Cooldown:     ${pc.cyan(merged.NOTIFICATION_COOLDOWN_SECONDS + "s")}`);
+    console.log(`  ${pc.green("✔")} Host IP:      ${pc.cyan(merged.HOST_IP)} ${pc.dim("(auto-detected)")}`);
+    console.log();
+    return merged as EnvConfig;
+  }
 
   // If not asking user AND credentials exist, just auto-detect IP and return
   if (!askUser && defaults.TELEGRAM_BOT_TOKEN && defaults.TELEGRAM_CHAT_ID) {

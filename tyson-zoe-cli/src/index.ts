@@ -164,6 +164,111 @@ async function firstRunFlow(): Promise<void> {
   console.log(box);
 }
 
+async function monitoringModesMenu(): Promise<void> {
+  const API_URL = "http://localhost:4000";
+
+  // Fetch current mode status
+  let modes: { home: { active: boolean }; "tyson-zoe": { active: boolean } };
+  try {
+    const resp = await fetch(`${API_URL}/api/modes`, { signal: AbortSignal.timeout(5000) });
+    modes = (await resp.json()) as typeof modes;
+  } catch {
+    console.log(`\n  ${pc.red("✘")} Could not reach automation service. Is it running?`);
+    return;
+  }
+
+  const homeStatus = modes.home.active ? pc.green("ON") : pc.red("OFF");
+  const tysonStatus = modes["tyson-zoe"].active ? pc.green("ON") : pc.red("OFF");
+
+  console.log(`\n  ${pc.bold("Monitoring Modes")}`);
+  console.log(`  ${pc.dim("─────────────────────────────────")}`);
+  console.log(`  🏠 Home Monitoring:       ${homeStatus}`);
+  console.log(`  🐕 Tyson/Zoe Monitoring:  ${tysonStatus}\n`);
+
+  const modeAction = await p.select({
+    message: "What would you like to do?",
+    options: [
+      { value: "toggle-home", label: `${modes.home.active ? "Disable" : "Enable"} Home Monitoring`, hint: "Boundary cross alerts (person detection)" },
+      { value: "toggle-tyson", label: `${modes["tyson-zoe"].active ? "Disable" : "Enable"} Tyson/Zoe Monitoring`, hint: "Dog detection alerts" },
+      { value: "schedule-home", label: "Schedule Home Monitoring", hint: "Set daily time range (IST)" },
+      { value: "schedule-tyson", label: "Schedule Tyson/Zoe Monitoring", hint: "Set daily time range (IST)" },
+      { value: "back", label: "Back" },
+    ],
+  });
+
+  if (p.isCancel(modeAction) || modeAction === "back") return;
+
+  if (modeAction === "toggle-home" || modeAction === "toggle-tyson") {
+    const mode = modeAction === "toggle-home" ? "home" : "tyson-zoe";
+    const currentlyActive = mode === "home" ? modes.home.active : modes["tyson-zoe"].active;
+    const newState = !currentlyActive;
+
+    try {
+      await fetch(`${API_URL}/api/rules/mode/${mode}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          enabled: newState,
+          timeRestriction: { enabled: false },
+        }),
+        signal: AbortSignal.timeout(5000),
+      });
+      const label = mode === "home" ? "Home Monitoring" : "Tyson/Zoe Monitoring";
+      console.log(`\n  ${pc.green("✔")} ${label} ${newState ? pc.green("ENABLED") : pc.red("DISABLED")}`);
+    } catch {
+      console.log(`\n  ${pc.red("✘")} Failed to update mode`);
+    }
+    return;
+  }
+
+  if (modeAction === "schedule-home" || modeAction === "schedule-tyson") {
+    const mode = modeAction === "schedule-home" ? "home" : "tyson-zoe";
+
+    const startHour = await p.text({
+      message: "Start hour (IST, 0-23)",
+      placeholder: "22",
+      defaultValue: "22",
+      validate: (v) => {
+        const n = Number(v);
+        if (isNaN(n) || n < 0 || n > 23) return "Must be 0-23";
+      },
+    });
+    if (p.isCancel(startHour)) return;
+
+    const endHour = await p.text({
+      message: "End hour (IST, 0-23)",
+      placeholder: "6",
+      defaultValue: "6",
+      validate: (v) => {
+        const n = Number(v);
+        if (isNaN(n) || n < 0 || n > 23) return "Must be 0-23";
+      },
+    });
+    if (p.isCancel(endHour)) return;
+
+    try {
+      await fetch(`${API_URL}/api/rules/mode/${mode}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          enabled: true,
+          timeRestriction: {
+            enabled: true,
+            startHour: Number(startHour),
+            endHour: Number(endHour),
+          },
+        }),
+        signal: AbortSignal.timeout(5000),
+      });
+      const label = mode === "home" ? "Home Monitoring" : "Tyson/Zoe Monitoring";
+      console.log(`\n  ${pc.green("✔")} ${label} scheduled: ${startHour}:00 → ${endHour}:00 IST`);
+    } catch {
+      console.log(`\n  ${pc.red("✘")} Failed to set schedule`);
+    }
+    return;
+  }
+}
+
 async function managementMenu(): Promise<void> {
   const running = isRunning();
   const uptime = getUptime();
@@ -187,6 +292,7 @@ async function managementMenu(): Promise<void> {
 
   const options = running
     ? [
+        { value: "modes", label: "Monitoring Modes", hint: "Home Monitoring / Tyson-Zoe — toggle or schedule" },
         { value: "stop", label: "Stop monitoring", hint: "docker compose down" },
         { value: "reconfigure", label: "Reconfigure", hint: "Edit Telegram / network settings" },
         { value: "dashboard", label: "Open Dashboard", hint: "http://localhost:3000" },
@@ -278,6 +384,11 @@ async function managementMenu(): Promise<void> {
     const frigatePort = getOS() === "windows" ? 5000 : 5050;
     openInBrowser(`http://localhost:${frigatePort}`);
     p.outro(pc.dim("Opening Frigate UI in browser..."));
+    process.exit(0);
+  }
+
+  if (action === "modes") {
+    await monitoringModesMenu();
     process.exit(0);
   }
 

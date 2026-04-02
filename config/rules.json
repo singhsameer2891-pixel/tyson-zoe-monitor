@@ -8,7 +8,8 @@
     "action": "entered",
     "timeRestriction": { "enabled": false },
     "notificationTemplate": "🐕 Tyson or Zoe spotted in the garden!",
-    "enabled": true
+    "enabled": true,
+    "mode": "tyson-zoe"
   },
   {
     "id": "rule-person-garden",
@@ -19,7 +20,8 @@
     "action": "entered",
     "timeRestriction": { "enabled": false },
     "notificationTemplate": "👤 Person detected in the garden area",
-    "enabled": true
+    "enabled": true,
+    "mode": "home"
   },
   {
     "id": "rule-boundary-backyard",
@@ -30,7 +32,8 @@
     "action": "entered",
     "timeRestriction": { "enabled": false },
     "notificationTemplate": "⚠️ ALERT: Person crossed boundary on Backyard!",
-    "enabled": true
+    "enabled": true,
+    "mode": "home"
   },
   {
     "id": "rule-boundary-first-floor",
@@ -41,7 +44,8 @@
     "action": "entered",
     "timeRestriction": { "enabled": false },
     "notificationTemplate": "⚠️ ALERT: Person crossed boundary on First Floor Backyard!",
-    "enabled": true
+    "enabled": true,
+    "mode": "home"
   },
   {
     "id": "rule-boundary-front-left",
@@ -52,7 +56,8 @@
     "action": "entered",
     "timeRestriction": { "enabled": false },
     "notificationTemplate": "⚠️ ALERT: Person crossed boundary on Front Porch Left!",
-    "enabled": true
+    "enabled": true,
+    "mode": "home"
   },
   {
     "id": "rule-boundary-front-right",
@@ -63,7 +68,8 @@
     "action": "entered",
     "timeRestriction": { "enabled": false },
     "notificationTemplate": "⚠️ ALERT: Person crossed boundary on Front Porch Right!",
-    "enabled": true
+    "enabled": true,
+    "mode": "home"
   },
   {
     "id": "rule-boundary-side-gallery",
@@ -74,6 +80,7 @@
     "action": "entered",
     "timeRestriction": { "enabled": false },
     "notificationTemplate": "⚠️ ALERT: Person crossed boundary on Side Gallery!",
-    "enabled": true
+    "enabled": true,
+    "mode": "home"
   }
 ]

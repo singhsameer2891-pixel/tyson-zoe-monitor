@@ -14,6 +14,7 @@ export interface Rule {
   timeRestriction: TimeRestriction;
   notificationTemplate: string;
   enabled: boolean;
+  mode: "home" | "tyson-zoe";
 }
 
 /** Frigate MQTT event payload (subset of fields we use) */

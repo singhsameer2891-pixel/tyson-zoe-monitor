@@ -48,6 +48,56 @@ app.post("/api/rules", (req: Request, res: Response) => {
   res.json({ ok: true, count: rules.length });
 });
 
+// PUT /api/rules/:id — update a single rule
+app.put("/api/rules/:id", (req: Request, res: Response) => {
+  const rules = loadRules();
+  const idx = rules.findIndex((r) => r.id === req.params.id);
+  if (idx === -1) {
+    res.status(404).json({ error: "Rule not found" });
+    return;
+  }
+  rules[idx] = { ...rules[idx], ...req.body, id: req.params.id };
+  saveRules(rules);
+  res.json({ ok: true, rule: rules[idx] });
+});
+
+// PUT /api/rules/mode/:mode — bulk enable/disable + set schedule for a mode
+app.put("/api/rules/mode/:mode", (req: Request, res: Response) => {
+  const mode = req.params.mode as "home" | "tyson-zoe";
+  if (mode !== "home" && mode !== "tyson-zoe") {
+    res.status(400).json({ error: "Mode must be 'home' or 'tyson-zoe'" });
+    return;
+  }
+  const { enabled, timeRestriction } = req.body;
+  const rules = loadRules();
+  let updated = 0;
+  for (const rule of rules) {
+    if (rule.mode === mode) {
+      if (typeof enabled === "boolean") rule.enabled = enabled;
+      if (timeRestriction) rule.timeRestriction = timeRestriction;
+      updated++;
+    }
+  }
+  saveRules(rules);
+  res.json({ ok: true, mode, updated });
+});
+
+// GET /api/modes — get status of each monitoring mode
+app.get("/api/modes", (_req: Request, res: Response) => {
+  const rules = loadRules();
+  const modes = {
+    home: {
+      rules: rules.filter((r) => r.mode === "home"),
+      active: rules.filter((r) => r.mode === "home").some((r) => r.enabled),
+    },
+    "tyson-zoe": {
+      rules: rules.filter((r) => r.mode === "tyson-zoe"),
+      active: rules.filter((r) => r.mode === "tyson-zoe").some((r) => r.enabled),
+    },
+  };
+  res.json(modes);
+});
+
 // GET /api/cameras — list cameras from frigate config
 app.get("/api/cameras", (_req: Request, res: Response) => {
   try {

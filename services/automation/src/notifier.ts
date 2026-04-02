@@ -18,11 +18,16 @@ export async function fetchSnapshot(camera: string): Promise<Buffer> {
   return Buffer.from(response.data);
 }
 
+/** Format camera name for display (snake_case → Title Case) */
+function formatCameraName(camera: string): string {
+  return camera.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 /** Build notification caption from rule and event details */
 function buildCaption(
   rule: Rule,
   camera: string,
-  zone: string
+  _zone: string
 ): string {
   const now = new Date();
   const timeStr = now.toLocaleString("en-IN", {
@@ -35,11 +40,12 @@ function buildCaption(
     timeZone: "Asia/Kolkata",
   });
 
+  const intruderType = rule.objectType === "dog" ? "🐕 Tyson/Zoe" : "👤 Person";
+
   return [
-    rule.notificationTemplate,
-    `📷 Camera: ${camera}`,
-    `🕐 Time: ${timeStr}`,
-    `📍 Zone: ${zone}`,
+    `⚠️ ALERT — ${formatCameraName(camera)}`,
+    `Intruder: ${intruderType}`,
+    `🕐 ${timeStr}`,
   ].join("\n");
 }
 
