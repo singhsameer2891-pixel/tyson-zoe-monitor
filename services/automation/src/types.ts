@@ -1,7 +1,9 @@
 export interface TimeRestriction {
   enabled: boolean;
   startHour: number;
+  startMinute?: number;
   endHour: number;
+  endMinute?: number;
 }
 
 export interface Rule {

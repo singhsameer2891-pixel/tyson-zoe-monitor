@@ -85,17 +85,19 @@ app.put("/api/rules/mode/:mode", (req: Request, res: Response) => {
 // GET /api/modes — get status of each monitoring mode
 app.get("/api/modes", (_req: Request, res: Response) => {
   const rules = loadRules();
-  const modes = {
-    home: {
-      rules: rules.filter((r) => r.mode === "home"),
-      active: rules.filter((r) => r.mode === "home").some((r) => r.enabled),
-    },
-    "tyson-zoe": {
-      rules: rules.filter((r) => r.mode === "tyson-zoe"),
-      active: rules.filter((r) => r.mode === "tyson-zoe").some((r) => r.enabled),
-    },
-  };
-  res.json(modes);
+
+  function modeStatus(mode: string) {
+    const modeRules = rules.filter((r) => r.mode === mode);
+    const active = modeRules.some((r) => r.enabled);
+    const scheduled = modeRules.some((r) => r.timeRestriction?.enabled);
+    const schedule = scheduled ? modeRules.find((r) => r.timeRestriction?.enabled)?.timeRestriction : null;
+    return { active, scheduled, schedule, ruleCount: modeRules.length };
+  }
+
+  res.json({
+    home: modeStatus("home"),
+    "tyson-zoe": modeStatus("tyson-zoe"),
+  });
 });
 
 // GET /api/cameras — list cameras from frigate config

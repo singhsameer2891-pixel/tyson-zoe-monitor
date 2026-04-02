@@ -23,15 +23,17 @@ export function isWithinTimeRestriction(rule: Rule): boolean {
   }
 
   const now = new Date();
-  const currentHour = now.getHours();
-  const { startHour, endHour } = rule.timeRestriction;
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const { startHour, startMinute = 0, endHour, endMinute = 0 } = rule.timeRestriction;
+  const startTotal = startHour * 60 + startMinute;
+  const endTotal = endHour * 60 + endMinute;
 
-  // Handle overnight ranges (e.g. 23:00 → 06:00)
-  if (startHour > endHour) {
-    return currentHour >= startHour || currentHour < endHour;
+  // Handle overnight ranges (e.g. 22:30 → 06:15)
+  if (startTotal > endTotal) {
+    return currentMinutes >= startTotal || currentMinutes < endTotal;
   }
-  // Same-day range (e.g. 09:00 → 17:00)
-  return currentHour >= startHour && currentHour < endHour;
+  // Same-day range (e.g. 09:00 → 17:30)
+  return currentMinutes >= startTotal && currentMinutes < endTotal;
 }
 
 /** Check if the cooldown period has elapsed for this rule */
