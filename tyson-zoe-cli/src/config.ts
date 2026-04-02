@@ -91,7 +91,7 @@ const DEFAULTS: EnvConfig = {
   TWILIO_FROM_NUMBER: "",
   TWILIO_TO_NUMBER: "",
   HOST_IP: "",
-  NOTIFICATION_COOLDOWN_SECONDS: "60",
+  NOTIFICATION_COOLDOWN_SECONDS: "0",
   FRIGATE_API_URL: "http://frigate:5000",
   MQTT_HOST: "mosquitto",
   MQTT_PORT: "1883",
@@ -227,6 +227,16 @@ export async function collectConfig(askUser: boolean = false): Promise<EnvConfig
     twilioTo = String(to);
   }
 
+  const cooldownInput = await p.text({
+    message: "Alert cooldown in seconds (0 = alert every time, 60 = once per minute per rule)",
+    placeholder: defaults.NOTIFICATION_COOLDOWN_SECONDS,
+    defaultValue: defaults.NOTIFICATION_COOLDOWN_SECONDS,
+    validate: (v) => {
+      if (v === "" || isNaN(Number(v)) || Number(v) < 0) return "Must be a number >= 0";
+    },
+  });
+  if (p.isCancel(cooldownInput)) return null;
+
   const detectedIP = getLanIP();
 
   console.log();
@@ -234,6 +244,7 @@ export async function collectConfig(askUser: boolean = false): Promise<EnvConfig
   console.log(`  ${pc.green("✔")} Chat ID:    ${pc.cyan(String(chatId))}`);
   console.log(`  ${pc.green("✔")} Gist Token: ${gistToken ? pc.dim(String(gistToken).slice(0, 10) + "...") : pc.yellow("skipped")}`);
   console.log(`  ${pc.green("✔")} Twilio:     ${twilioSid ? pc.dim("configured") : pc.yellow("skipped")}`);
+  console.log(`  ${pc.green("✔")} Cooldown:   ${pc.cyan(String(cooldownInput) + "s")}`);
   console.log(`  ${pc.green("✔")} Host IP:    ${pc.cyan(detectedIP)} ${pc.dim("(auto-detected)")}`);
   console.log();
 
@@ -246,6 +257,7 @@ export async function collectConfig(askUser: boolean = false): Promise<EnvConfig
     TWILIO_AUTH_TOKEN: twilioAuthToken,
     TWILIO_FROM_NUMBER: twilioFrom,
     TWILIO_TO_NUMBER: twilioTo,
+    NOTIFICATION_COOLDOWN_SECONDS: String(cooldownInput),
     HOST_IP: detectedIP,
   };
 }
