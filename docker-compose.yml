@@ -19,7 +19,7 @@ services:
     container_name: cctv-frigate
     restart: unless-stopped
     privileged: true
-    shm_size: "256mb"
+    shm_size: "512mb"
     ports:
       - "5050:5000"   # Frigate web UI (5000/5001 conflict with macOS AirPlay)
       - "8554:8554"   # RTSP restream
